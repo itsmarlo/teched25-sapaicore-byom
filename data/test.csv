@@ -1,0 +1,181 @@
+text,label,label_name
+ALERT: invoice received before goods receipt posting,3,Three-Way Match Failure
+ALERT: supplier bank details pending verification,4,Supplier Issues
+Cannot match invoice to any existing PO in system,2,Missing PO Reference
+URGENT: PO number not found in SAP system,2,Missing PO Reference
+URGENT: Unit price variance of 15% requires approval,0,Price Variance
+Supplier blocked due to compliance issues,4,Supplier Issues
+ALERT: vendor on credit hold cannot process payment,4,Supplier Issues
+ALERT: received quantity 500 units but invoice shows 550 units,1,Quantity Mismatch
+Purchase order reference missing on invoice document,2,Missing PO Reference
+Price difference detected: invoiced 100 EUR per unit vs PO 90 EUR,0,Price Variance
+"Delivery note shows 100 items, invoice has 120 items",1,Quantity Mismatch
+Goods receipt not posted for this purchase order,3,Three-Way Match Failure
+URGENT: Cannot match invoice to any existing PO in system,2,Missing PO Reference
+URGENT: Supplier blocked due to compliance issues,4,Supplier Issues
+Invoice received before goods receipt posting,3,Three-Way Match Failure
+Invoice amount 5000 USD exceeds PO amount 4500 USD by 11%,0,Price Variance
+ALERT: received quantity 500 units but invoice shows 550 units,1,Quantity Mismatch
+Quantity on invoice does not match goods receipt,1,Quantity Mismatch
+Received quantity 500 units but invoice shows 550 units,1,Quantity Mismatch
+Unit price variance of 15% requires approval,0,Price Variance
+URGENT: Three-way match failed: PO-GR-Invoice discrepancy,3,Three-Way Match Failure
+Three-way match failed: PO-GR-Invoice discrepancy,3,Three-Way Match Failure
+Purchase order reference missing on invoice document,2,Missing PO Reference
+ALERT: supplier blocked due to compliance issues,4,Supplier Issues
+PO number not found in SAP system,2,Missing PO Reference
+ALERT: quantity on invoice does not match goods receipt,1,Quantity Mismatch
+URGENT: Quantity on invoice does not match goods receipt,1,Quantity Mismatch
+PO number not found in SAP system,2,Missing PO Reference
+URGENT: Three-way match failed: PO-GR-Invoice discrepancy,3,Three-Way Match Failure
+URGENT: Supplier blocked due to compliance issues,4,Supplier Issues
+ALERT: quantity on invoice does not match goods receipt,1,Quantity Mismatch
+ALERT: vendor on credit hold cannot process payment,4,Supplier Issues
+URGENT: Goods receipt not posted for this purchase order,3,Three-Way Match Failure
+Supplier bank details pending verification,4,Supplier Issues
+Three-way match failed: PO-GR-Invoice discrepancy,3,Three-Way Match Failure
+Three-way match failed: PO-GR-Invoice discrepancy,3,Three-Way Match Failure
+Three-way match failed: PO-GR-Invoice discrepancy,3,Three-Way Match Failure
+URGENT: PO number not found in SAP system,2,Missing PO Reference
+Supplier bank details pending verification,4,Supplier Issues
+Quantity on invoice does not match goods receipt,1,Quantity Mismatch
+Vendor on credit hold cannot process payment,4,Supplier Issues
+"Delivery note shows 100 items, invoice has 120 items",1,Quantity Mismatch
+Invoice amount 5000 USD exceeds PO amount 4500 USD by 11%,0,Price Variance
+ALERT: po number not found in sap system,2,Missing PO Reference
+ALERT: received quantity 500 units but invoice shows 550 units,1,Quantity Mismatch
+"URGENT: Delivery note shows 100 items, invoice has 120 items",1,Quantity Mismatch
+Vendor on credit hold cannot process payment,4,Supplier Issues
+Invoice amount 5000 EUR exceeds PO amount 4500 EUR by 11%,0,Price Variance
+"ALERT: delivery note shows 100 items, invoice has 120 items",1,Quantity Mismatch
+URGENT: Three-way match failed: PO-GR-Invoice discrepancy,3,Three-Way Match Failure
+Goods receipt not posted for this purchase order,3,Three-Way Match Failure
+ALERT: cannot match invoice to any existing po in system,2,Missing PO Reference
+Cannot match invoice to any existing PO in system,2,Missing PO Reference
+Unit price variance of 15% requires approval,0,Price Variance
+URGENT: Supplier blocked due to compliance issues,4,Supplier Issues
+ALERT: unit price variance of 15% requires approval,0,Price Variance
+Supplier bank details pending verification,4,Supplier Issues
+Price difference detected: invoiced 100 USD per unit vs PO 90 USD,0,Price Variance
+URGENT: PO number not found in SAP system,2,Missing PO Reference
+ALERT: goods receipt not posted for this purchase order,3,Three-Way Match Failure
+Vendor on credit hold cannot process payment,4,Supplier Issues
+Vendor on credit hold cannot process payment,4,Supplier Issues
+PO number not found in SAP system,2,Missing PO Reference
+Invoice received before goods receipt posting,3,Three-Way Match Failure
+ALERT: unit price variance of 15% requires approval,0,Price Variance
+URGENT: Unit price variance of 15% requires approval,0,Price Variance
+URGENT: Quantity on invoice does not match goods receipt,1,Quantity Mismatch
+Goods receipt not posted for this purchase order,3,Three-Way Match Failure
+ALERT: price difference detected: invoiced 100 eur per unit vs po 90 eur,0,Price Variance
+ALERT: invoice received before goods receipt posting,3,Three-Way Match Failure
+URGENT: Supplier bank details pending verification,4,Supplier Issues
+Cannot match invoice to any existing PO in system,2,Missing PO Reference
+ALERT: three-way match failed: po-gr-invoice discrepancy,3,Three-Way Match Failure
+URGENT: Unit price variance of 15% requires approval,0,Price Variance
+URGENT: Received quantity 500 units but invoice shows 550 units,1,Quantity Mismatch
+Purchase order reference missing on invoice document,2,Missing PO Reference
+Cannot match invoice to any existing PO in system,2,Missing PO Reference
+Unit price variance of 15% requires approval,0,Price Variance
+ALERT: supplier blocked due to compliance issues,4,Supplier Issues
+URGENT: Quantity on invoice does not match goods receipt,1,Quantity Mismatch
+Cannot match invoice to any existing PO in system,2,Missing PO Reference
+Unit price variance of 15% requires approval,0,Price Variance
+URGENT: Three-way match failed: PO-GR-Invoice discrepancy,3,Three-Way Match Failure
+Price difference detected: invoiced 100 USD per unit vs PO 90 USD,0,Price Variance
+"Delivery note shows 100 items, invoice has 120 items",1,Quantity Mismatch
+Vendor on credit hold cannot process payment,4,Supplier Issues
+"ALERT: delivery note shows 100 items, invoice has 120 items",1,Quantity Mismatch
+URGENT: Supplier bank details pending verification,4,Supplier Issues
+Cannot match invoice to any existing PO in system,2,Missing PO Reference
+Unit price variance of 15% requires approval,0,Price Variance
+Unit price variance of 15% requires approval,0,Price Variance
+URGENT: Purchase order reference missing on invoice document,2,Missing PO Reference
+URGENT: Invoice received before goods receipt posting,3,Three-Way Match Failure
+ALERT: quantity on invoice does not match goods receipt,1,Quantity Mismatch
+URGENT: Cannot match invoice to any existing PO in system,2,Missing PO Reference
+ALERT: invoice amount 5000 eur exceeds po amount 4500 eur by 11%,0,Price Variance
+URGENT: Received quantity 500 units but invoice shows 550 units,1,Quantity Mismatch
+Purchase order reference missing on invoice document,2,Missing PO Reference
+Supplier bank details pending verification,4,Supplier Issues
+Three-way match failed: PO-GR-Invoice discrepancy,3,Three-Way Match Failure
+Received quantity 500 units but invoice shows 550 units,1,Quantity Mismatch
+PO number not found in SAP system,2,Missing PO Reference
+Supplier blocked due to compliance issues,4,Supplier Issues
+Purchase order reference missing on invoice document,2,Missing PO Reference
+URGENT: Goods receipt not posted for this purchase order,3,Three-Way Match Failure
+Cannot match invoice to any existing PO in system,2,Missing PO Reference
+ALERT: invoice received before goods receipt posting,3,Three-Way Match Failure
+URGENT: Received quantity 500 units but invoice shows 550 units,1,Quantity Mismatch
+Purchase order reference missing on invoice document,2,Missing PO Reference
+"URGENT: Delivery note shows 100 items, invoice has 120 items",1,Quantity Mismatch
+ALERT: supplier blocked due to compliance issues,4,Supplier Issues
+ALERT: unit price variance of 15% requires approval,0,Price Variance
+ALERT: received quantity 500 units but invoice shows 550 units,1,Quantity Mismatch
+ALERT: price difference detected: invoiced 100 eur per unit vs po 90 eur,0,Price Variance
+Price difference detected: invoiced 100 USD per unit vs PO 90 USD,0,Price Variance
+Quantity on invoice does not match goods receipt,1,Quantity Mismatch
+URGENT: PO number not found in SAP system,2,Missing PO Reference
+Quantity on invoice does not match goods receipt,1,Quantity Mismatch
+Supplier bank details pending verification,4,Supplier Issues
+Goods receipt not posted for this purchase order,3,Three-Way Match Failure
+URGENT: Supplier blocked due to compliance issues,4,Supplier Issues
+"ALERT: delivery note shows 100 items, invoice has 120 items",1,Quantity Mismatch
+URGENT: Supplier blocked due to compliance issues,4,Supplier Issues
+Supplier bank details pending verification,4,Supplier Issues
+Unit price variance of 15% requires approval,0,Price Variance
+URGENT: Supplier blocked due to compliance issues,4,Supplier Issues
+Received quantity 500 units but invoice shows 550 units,1,Quantity Mismatch
+Vendor on credit hold cannot process payment,4,Supplier Issues
+Invoice amount 5000 EUR exceeds PO amount 4500 EUR by 11%,0,Price Variance
+ALERT: invoice amount 5000 eur exceeds po amount 4500 eur by 11%,0,Price Variance
+URGENT: Goods receipt not posted for this purchase order,3,Three-Way Match Failure
+URGENT: Price difference detected: invoiced 100 EUR per unit vs PO 90 EUR,0,Price Variance
+ALERT: invoice amount 5000 eur exceeds po amount 4500 eur by 11%,0,Price Variance
+ALERT: purchase order reference missing on invoice document,2,Missing PO Reference
+ALERT: supplier blocked due to compliance issues,4,Supplier Issues
+Vendor on credit hold cannot process payment,4,Supplier Issues
+ALERT: cannot match invoice to any existing po in system,2,Missing PO Reference
+ALERT: three-way match failed: po-gr-invoice discrepancy,3,Three-Way Match Failure
+Three-way match failed: PO-GR-Invoice discrepancy,3,Three-Way Match Failure
+URGENT: Received quantity 500 units but invoice shows 550 units,1,Quantity Mismatch
+Three-way match failed: PO-GR-Invoice discrepancy,3,Three-Way Match Failure
+"URGENT: Delivery note shows 100 items, invoice has 120 items",1,Quantity Mismatch
+URGENT: Received quantity 500 units but invoice shows 550 units,1,Quantity Mismatch
+ALERT: quantity on invoice does not match goods receipt,1,Quantity Mismatch
+URGENT: Goods receipt not posted for this purchase order,3,Three-Way Match Failure
+URGENT: Unit price variance of 15% requires approval,0,Price Variance
+Supplier blocked due to compliance issues,4,Supplier Issues
+URGENT: Supplier bank details pending verification,4,Supplier Issues
+Quantity on invoice does not match goods receipt,1,Quantity Mismatch
+Invoice received before goods receipt posting,3,Three-Way Match Failure
+Three-way match failed: PO-GR-Invoice discrepancy,3,Three-Way Match Failure
+ALERT: invoice received before goods receipt posting,3,Three-Way Match Failure
+ALERT: po number not found in sap system,2,Missing PO Reference
+URGENT: Quantity on invoice does not match goods receipt,1,Quantity Mismatch
+ALERT: three-way match failed: po-gr-invoice discrepancy,3,Three-Way Match Failure
+Unit price variance of 15% requires approval,0,Price Variance
+URGENT: Unit price variance of 15% requires approval,0,Price Variance
+URGENT: Cannot match invoice to any existing PO in system,2,Missing PO Reference
+Supplier blocked due to compliance issues,4,Supplier Issues
+Three-way match failed: PO-GR-Invoice discrepancy,3,Three-Way Match Failure
+URGENT: Purchase order reference missing on invoice document,2,Missing PO Reference
+Invoice amount 5000 EUR exceeds PO amount 4500 EUR by 11%,0,Price Variance
+Three-way match failed: PO-GR-Invoice discrepancy,3,Three-Way Match Failure
+Cannot match invoice to any existing PO in system,2,Missing PO Reference
+ALERT: three-way match failed: po-gr-invoice discrepancy,3,Three-Way Match Failure
+URGENT: PO number not found in SAP system,2,Missing PO Reference
+"Delivery note shows 100 items, invoice has 120 items",1,Quantity Mismatch
+URGENT: Supplier bank details pending verification,4,Supplier Issues
+Unit price variance of 15% requires approval,0,Price Variance
+Price difference detected: invoiced 100 USD per unit vs PO 90 USD,0,Price Variance
+ALERT: purchase order reference missing on invoice document,2,Missing PO Reference
+Purchase order reference missing on invoice document,2,Missing PO Reference
+Price difference detected: invoiced 100 USD per unit vs PO 90 USD,0,Price Variance
+ALERT: price difference detected: invoiced 100 eur per unit vs po 90 eur,0,Price Variance
+URGENT: Goods receipt not posted for this purchase order,3,Three-Way Match Failure
+Price difference detected: invoiced 100 EUR per unit vs PO 90 EUR,0,Price Variance
+"ALERT: delivery note shows 100 items, invoice has 120 items",1,Quantity Mismatch
+Vendor on credit hold cannot process payment,4,Supplier Issues
+Supplier blocked due to compliance issues,4,Supplier Issues
+Cannot match invoice to any existing PO in system,2,Missing PO Reference
