@@ -1,0 +1,60 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: invoice-classifier-training
+  annotations:
+    scenarios.ai.sap.com/description: "Train invoice classifier model"
+    scenarios.ai.sap.com/name: "invoice-classification"
+    executables.ai.sap.com/description: "Training pipeline for invoice classification"
+    executables.ai.sap.com/name: "training"
+  labels:
+    scenarios.ai.sap.com/id: "invoice-classification"
+    ai.sap.com/version: "1.0.0"
+
+spec:
+  imagePullSecrets:
+    - name: docker-registry-secret
+  
+  entrypoint: training-pipeline
+  
+  arguments:
+    parameters:
+      - name: baseModel
+        value: "distilbert-base-uncased"
+      - name: numEpochs
+        value: "3"
+      - name: learningRate
+        value: "2e-5"
+      - name: batchSize
+        value: "16"
+  
+  templates:
+    - name: training-pipeline
+      steps:
+        - - name: train-model
+            template: model-training
+        - - name: evaluate-model
+            template: model-evaluation
+        - - name: save-model
+            template: model-storage
+    
+    - name: model-training
+      metadata:
+        labels:
+          ai.sap.com/resourcePlan: train.l
+      container:
+        image: docker.io/yourusername/invoice-classifier-training:1.0.0
+        command:
+          - python
+          - train_model.py
+        args:
+          - --base-model
+          - "{{workflow.parameters.baseModel}}"
+          - --epochs
+          - "{{workflow.parameters.numEpochs}}"
+          - --learning-rate
+          - "{{workflow.parameters.learningRate}}"
+          - --batch-size
+          - "{{workflow.parameters.batchSize}}"
+          - --output-dir
+          -

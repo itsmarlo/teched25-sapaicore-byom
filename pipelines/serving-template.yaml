@@ -1,0 +1,75 @@
+apiVersion: ai.sap.com/v1alpha1
+kind: ServingTemplate
+metadata:
+  name: invoice-classifier-serving
+  annotations:
+    scenarios.ai.sap.com/description: "Blocked invoice classification using Hugging Face Transformers"
+    scenarios.ai.sap.com/name: "invoice-classification"
+    executables.ai.sap.com/description: "Classify blocked invoices in SAP S/4HANA"
+    executables.ai.sap.com/name: "invoice-classifier"
+  labels:
+    scenarios.ai.sap.com/id: "invoice-classification"
+    ai.sap.com/version: "1.0.0"
+
+spec:
+  inputs:
+    parameters:
+      - name: modelName
+        type: string
+        default: "invoice-classifier"
+      - name: modelVersion
+        type: string
+        default: "1.0.0"
+      - name: minReplicas
+        type: integer
+        default: 1
+      - name: maxReplicas
+        type: integer
+        default: 3
+      - name: resourcePlan
+        type: string
+        default: "infer.s"  # Options: infer.s, infer.m, infer.l
+
+  template:
+    apiVersion: serving.kserve.io/v1beta1
+    kind: InferenceService
+    metadata:
+      name: "{{.inputs.parameters.modelName}}"
+      labels:
+        ai.sap.com/resourcePlan: "{{.inputs.parameters.resourcePlan}}"
+    spec:
+      predictor:
+        minReplicas: "{{.inputs.parameters.minReplicas}}"
+        maxReplicas: "{{.inputs.parameters.maxReplicas}}"
+        containers:
+          - name: kserve-container
+            image: docker.io/yourusername/invoice-classifier:{{.inputs.parameters.modelVersion}}
+            ports:
+              - containerPort: 8080
+                protocol: TCP
+            env:
+              - name: MODEL_PATH
+                value: "/app/model"
+              - name: PORT
+                value: "8080"
+            resources:
+              requests:
+                memory: "2Gi"
+                cpu: "1000m"
+              limits:
+                memory: "4Gi"
+                cpu: "2000m"
+            livenessProbe:
+              httpGet:
+                path: /health
+                port: 8080
+              initialDelaySeconds: 60
+              periodSeconds: 30
+              timeoutSeconds: 10
+            readinessProbe:
+              httpGet:
+                path: /health
+                port: 8080
+              initialDelaySeconds: 30
+              periodSeconds: 10
+              timeoutSeconds: 5
