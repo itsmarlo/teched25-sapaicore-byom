@@ -1,0 +1,9 @@
+# If you use a GPU base like pytorch/pytorch:2.3.1-cuda12.1-cudnn8-runtime,
+# remove the next line to avoid reinstalling torch.
+torch==2.3.1
+
+transformers>=4.42.0
+datasets>=2.20.0
+scikit-learn>=1.4.2
+pandas>=2.2.2
+numpy>=1.26.4
