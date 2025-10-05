@@ -1,30 +1,44 @@
-# CPU default. For GPU, see note below.
+# Use an ARG so we can switch between CPU and GPU bases at build-time.
+# Example GPU base: pytorch/pytorch:2.3.1-cuda12.1-cudnn8-runtime
 ARG BASE_IMAGE=python:3.10-slim
 FROM ${BASE_IMAGE}
 
+# Keep Python tidy and deterministic; set Hugging Face caches to a temp dir.
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     HF_HOME=/tmp/hf_cache \
     TRANSFORMERS_CACHE=/tmp/hf_cache \
+    # AI Core will mount these paths; scripts default to them.
     OUTPUT_DIR=/mnt/models \
     DATA_DIR=/mnt/data
 
+# Minimal OS packages:
+# - tini: proper PID 1 for signal handling (Ctrl+C, SIGTERM in AI Core)
+# - build-essential, git, curl: allow wheels to compile and basic dev tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
       tini build-essential git curl \
     && rm -rf /var/lib/apt/lists/*
 
+# Work inside /app to keep paths consistent
 WORKDIR /app
+
+# Install only what training needs (keeps image smaller and reproducible)
 COPY requirements-train.txt .
 RUN python -m pip install --upgrade pip && pip install -r requirements-train.txt
 
+# Add your training code and entry script
 COPY train.py /app/train.py
 COPY train.sh /app/train.sh
 RUN chmod +x /app/train.sh
 
-# Non-root
+# Drop root for security best practice (especially in shared clusters)
 RUN useradd -m appuser
 USER appuser
 
+# tini becomes PID 1; it forwards signals cleanly to Python
 ENTRYPOINT ["/usr/bin/tini", "--"]
+
+# Default command starts the training wrapper (AI Core can override if needed)
 CMD ["/app/train.sh"]
+
