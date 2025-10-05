@@ -14,14 +14,14 @@ metadata:
 spec:
   inputs:
     artifacts:
-      - name: invoiceclassifiermodel          # comes from your training workflow (globalName)
+      - name: invoiceclassifiermodel
     parameters:
       - name: serviceName
         type: string
         default: "invoice-classifier"
-      - name: image                           # <— full image incl. repo
+      - name: image
         type: string
-        default: "docker.io/yourrepo/invoice-serve:latest"
+        default: "docker.io/itsmarlo/invoice-serve:latest"
       - name: imagePullSecret
         type: string
         default: "docker-registry-secret"
@@ -35,28 +35,3 @@ spec:
         type: integer
         default: 3
       - name: resourcePlan
-        type: string
-        default: "infer.s"                    # choose infer.m / infer.l or GPU plan if needed
-  template:
-    apiVersion: "serving.kserve.io/v1beta1"
-    kind: InferenceService
-    metadata:
-      name: "{{.inputs.parameters.serviceName}}"
-      annotations: |
-        autoscaling.knative.dev/metric: concurrency
-        autoscaling.knative.dev/target: "1"
-        autoscaling.knative.dev/targetBurstCapacity: "0"
-      labels: |
-        ai.sap.com/resourcePlan: {{.inputs.parameters.resourcePlan}}
-    spec: |
-      predictor:
-        imagePullSecrets:
-          - name: {{.inputs.parameters.imagePullSecret}}
-        minReplicas: {{.inputs.parameters.minReplicas}}
-        maxReplicas: {{.inputs.parameters.maxReplicas}}
-
-        # KServe will download the model (from STORAGE_URI) into the volume named
-        # 'kserve-provision-location'. Your container reads it from /mnt/models.
-        containers:
-        - name: kserve-contai
-

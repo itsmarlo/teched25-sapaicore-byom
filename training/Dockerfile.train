@@ -1,44 +1,30 @@
-# Use an ARG so we can switch between CPU and GPU bases at build-time.
-# Example GPU base: pytorch/pytorch:2.3.1-cuda12.1-cudnn8-runtime
 ARG BASE_IMAGE=python:3.10-slim
 FROM ${BASE_IMAGE}
 
-# Keep Python tidy and deterministic; set Hugging Face caches to a temp dir.
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     HF_HOME=/tmp/hf_cache \
     TRANSFORMERS_CACHE=/tmp/hf_cache \
-    # AI Core will mount these paths; scripts default to them.
-    OUTPUT_DIR=/mnt/models \
-    DATA_DIR=/mnt/data
+    DATA_DIR=/mnt/data \
+    OUTPUT_DIR=/mnt/models
 
-# Minimal OS packages:
-# - tini: proper PID 1 for signal handling (Ctrl+C, SIGTERM in AI Core)
-# - build-essential, git, curl: allow wheels to compile and basic dev tools
-RUN apt-get update && apt-get install -y --no-install-recommends \
-      tini build-essential git curl \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends tini && rm -rf /var/lib/apt/lists/*
 
-# Work inside /app to keep paths consistent
 WORKDIR /app
 
-# Install only what training needs (keeps image smaller and reproducible)
-COPY requirements-train.txt .
-RUN python -m pip install --upgrade pip && pip install -r requirements-train.txt
+# Install training deps (from training/)
+COPY training/requirements-train.txt /app/requirements-train.txt
+RUN python -m pip install --upgrade pip && pip install -r /app/requirements-train.txt
 
-# Add your training code and entry script
-COPY train.py /app/train.py
-COPY train.sh /app/train.sh
-RUN chmod +x /app/train.sh
+# Copy training code (you named it train_model.py)
+COPY training/train.py /app/train_model.py
 
-# Drop root for security best practice (especially in shared clusters)
+# Run as non-root
 RUN useradd -m appuser
 USER appuser
 
-# tini becomes PID 1; it forwards signals cleanly to Python
 ENTRYPOINT ["/usr/bin/tini", "--"]
 
-# Default command starts the training wrapper (AI Core can override if needed)
-CMD ["/app/train.sh"]
-
+# Create /app/data symlink → /mnt/data, ensure OUTPUT_DIR, then run training
+CMD ["bash","-lc","mkdir -p /app/data && ln -sfn ${DATA_DIR:-/mnt/data} /app/data && mkdir -p ${OUTPUT_DIR:-/mnt/models} && python /app/train_model.py"]

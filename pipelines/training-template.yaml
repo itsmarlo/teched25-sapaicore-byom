@@ -19,9 +19,10 @@ spec:
   entrypoint: training-pipeline
   arguments:
     parameters:
-      # You will set this to your pushed image, e.g. docker.io/itsmarlo/invoice-train:latest
+      # Training image in your registry
       - name: trainImage
-        value: "your-registry/invoice-train:latest"
+        value: "docker.io/itsmarlo/invoice-train:latest"
+      # Hyperparams below are placeholders; current train.py ignores them.
       - name: baseModel
         value: "microsoft/deberta-v3-base"
       - name: numEpochs
@@ -30,6 +31,7 @@ spec:
         value: "2e-5"
       - name: batchSize
         value: "16"
+      # Used by train.py
       - name: numLabels
         value: "5"
   templates:
@@ -64,16 +66,16 @@ spec:
     - name: model-training
       metadata:
         labels:
-          ai.sap.com/resourcePlan: train.l        # pick your workload class
+          ai.sap.com/resourcePlan: train.l
       inputs:
         artifacts:
           - name: invoicesdataset
-            path: /app/data/                      # your image symlinks /app/data -> /mnt/data
+            path: /app/data/
       outputs:
         artifacts:
           - name: trainedModel
             globalName: invoiceclassifiermodel
-            path: /app/invoice_classifier/        # we save here via OUTPUT_DIR below
+            path: /app/invoice_classifier/
             archive: { none: {} }
       container:
         image: "{{workflow.parameters.trainImage}}"
@@ -83,16 +85,16 @@ spec:
           - |
             set -e
             mkdir -p /app/invoice_classifier
-            # Pass hyperparameters as env. Your code reads OUTPUT_DIR and NUM_LABELS.
+            # Env that train.py actually reads
             export OUTPUT_DIR=/app/invoice_classifier
             export NUM_LABELS="{{workflow.parameters.numLabels}}"
-            # Optional envs if your code uses them (safe to keep even if unused)
+            # (Optional future wiring—currently unused by your train.py)
             export MODEL_NAME="{{workflow.parameters.baseModel}}"
             export NUM_EPOCHS="{{workflow.parameters.numEpochs}}"
             export LEARNING_RATE="{{workflow.parameters.learningRate}}"
             export BATCH_SIZE="{{workflow.parameters.batchSize}}"
-            # Prefer wrapper if present, else call python directly
-            if [ -x /app/train.sh ]; then /app/train.sh; else python /app/train.py; fi
+            # Run training (dataset already mounted at /app/data/)
+            python /app/train.py
 
     # === Step 2: Evaluate (placeholder) ===
     - name: model-evaluation
@@ -102,7 +104,7 @@ spec:
       inputs:
         artifacts:
           - name: trainedModel
-            path: /app/invoice_classifier/        # takes output of training
+            path: /app/invoice_classifier/
       outputs:
         artifacts:
           - name: evalmetrics
@@ -125,7 +127,7 @@ spec:
     - name: model-storage
       metadata:
         labels:
-          ai.sap.com/resourcePlan: train.s        # smaller plan is fine
+          ai.sap.com/resourcePlan: train.s
       inputs:
         artifacts:
           - name: trainedModel
@@ -136,5 +138,4 @@ spec:
         image: alpine:3.19
         command: ["/bin/sh","-lc"]
         args: ["echo 'Artifacts staged at /app/final; AI Core will upload them.'"]
-
 
