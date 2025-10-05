@@ -7,12 +7,18 @@ metadata:
     scenarios.ai.sap.com/name: "invoice-classification"
     executables.ai.sap.com/description: "Classify blocked invoices in SAP S/4HANA"
     executables.ai.sap.com/name: "invoice-classifier"
+
+    # ---- Added: declare the input artifact kind (model) ----
+    artifacts.ai.sap.com/invoiceclassifiermodel.kind: "model"
   labels:
     scenarios.ai.sap.com/id: "invoice-classification"
     ai.sap.com/version: "1.0.0"
 
 spec:
   inputs:
+    # ---- Added: artifact placeholder for the trained model from training ----
+    artifacts:
+      - name: invoiceclassifiermodel
     parameters:
       - name: modelName
         type: string
@@ -28,28 +34,39 @@ spec:
         default: 3
       - name: resourcePlan
         type: string
-        default: "infer.s"  # Options: infer.s, infer.m, infer.l
+        default: "infer.s"  # infer.s, infer.m, infer.l
+      - name: imagePullSecret
+        type: string
+        default: "docker-registry-secret"
 
   template:
-    apiVersion: serving.kserve.io/v1beta1
+    apiVersion: "serving.kserve.io/v1beta1"
     kind: InferenceService
     metadata:
       name: "{{.inputs.parameters.modelName}}"
-      labels:
-        ai.sap.com/resourcePlan: "{{.inputs.parameters.resourcePlan}}"
-    spec:
+      # ---- Added: autoscaling annotations like in B ----
+      annotations: |
+        autoscaling.knative.dev/metric: concurrency
+        autoscaling.knative.dev/target: "1"
+        autoscaling.knative.dev/targetBurstCapacity: "0"
+      labels: |
+        ai.sap.com/resourcePlan: {{.inputs.parameters.resourcePlan}}
+    spec: |
       predictor:
-        minReplicas: "{{.inputs.parameters.minReplicas}}"
-        maxReplicas: "{{.inputs.parameters.maxReplicas}}"
+        imagePullSecrets:
+          - name: {{.inputs.parameters.imagePullSecret}}
+        minReplicas: {{.inputs.parameters.minReplicas}}
+        maxReplicas: {{.inputs.parameters.maxReplicas}}
         containers:
           - name: kserve-container
             image: docker.io/yourusername/invoice-classifier:{{.inputs.parameters.modelVersion}}
             ports:
               - containerPort: 8080
                 protocol: TCP
+            # ---- Important: point KServe to the model artifact in object storage ----
             env:
-              - name: MODEL_PATH
-                value: "/app/model"
+              - name: STORAGE_URI
+                value: "{{inputs.artifacts.invoiceclassifiermodel}}"
               - name: PORT
                 value: "8080"
             resources:

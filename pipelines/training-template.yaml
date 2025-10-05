@@ -5,8 +5,13 @@ metadata:
   annotations:
     scenarios.ai.sap.com/description: "Train invoice classifier model"
     scenarios.ai.sap.com/name: "invoice-classification"
+
     executables.ai.sap.com/description: "Training pipeline for invoice classification"
     executables.ai.sap.com/name: "training"
+
+    artifacts.ai.sap.com/invoicesdataset.kind: "dataset"   # input artifact kind
+    artifacts.ai.sap.com/invoiceclassifiermodel.kind: "model" # output artifact kind
+    artifacts.ai.sap.com/evalmetrics.kind: "metrics"       # optional, for evaluation output
   labels:
     scenarios.ai.sap.com/id: "invoice-classification"
     ai.sap.com/version: "1.0.0"
@@ -14,9 +19,9 @@ metadata:
 spec:
   imagePullSecrets:
     - name: docker-registry-secret
-  
+
   entrypoint: training-pipeline
-  
+
   arguments:
     parameters:
       - name: baseModel
@@ -27,26 +32,55 @@ spec:
         value: "2e-5"
       - name: batchSize
         value: "16"
-  
+
   templates:
+    # Orchestrates the steps
     - name: training-pipeline
       steps:
         - - name: train-model
             template: model-training
+            arguments:
+              artifacts:
+                - name: invoicesdataset
+                  from: "{{inputs.artifacts.invoicesdataset}}"
         - - name: evaluate-model
             template: model-evaluation
+            arguments:
+              artifacts:
+                - name: trainedModel
+                  from: "{{steps.train-model.outputs.artifacts.trainedModel}}"
         - - name: save-model
             template: model-storage
-    
+            arguments:
+              artifacts:
+                - name: trainedModel
+                  from: "{{steps.train-model.outputs.artifacts.trainedModel}}"
+                - name: evalmetrics
+                  from: "{{steps.evaluate-model.outputs.artifacts.evalmetrics}}"
+      inputs:
+        artifacts:
+          - name: invoicesdataset          # input artifact placeholder (attach in AI Launchpad)
+            path: /app/data/               # where it will be placed inside the container
+
+    # Step 1: Training
     - name: model-training
       metadata:
         labels:
           ai.sap.com/resourcePlan: train.l
+      inputs:
+        artifacts:
+          - name: invoicesdataset
+            path: /app/data/
+      outputs:
+        artifacts:
+          - name: trainedModel
+            globalName: invoiceclassifiermodel
+            path: /app/output/model/
+            archive:
+              none: {}
       container:
         image: docker.io/yourusername/invoice-classifier-training:1.0.0
-        command:
-          - python
-          - train_model.py
+        command: ["python", "train_model.py"]
         args:
           - --base-model
           - "{{workflow.parameters.baseModel}}"
@@ -56,5 +90,50 @@ spec:
           - "{{workflow.parameters.learningRate}}"
           - --batch-size
           - "{{workflow.parameters.batchSize}}"
+          - --data-dir
+          - /app/data/
           - --output-dir
-          -
+          - /app/output/model/
+
+    # Step 2: Evaluation
+    - name: model-evaluation
+      metadata:
+        labels:
+          ai.sap.com/resourcePlan: train.l
+      inputs:
+        artifacts:
+          - name: trainedModel
+            path: /app/model/
+      outputs:
+        artifacts:
+          - name: evalmetrics
+            globalName: evalmetrics
+            path: /app/output/metrics/
+            archive:
+              none: {}
+      container:
+        image: docker.io/yourusername/invoice-classifier-training:1.0.0
+        command: ["python", "evaluate.py"]
+        args:
+          - --model-dir
+          - /app/model/
+          - --metrics-dir
+          - /app/output/metrics/
+
+    # Step 3: (Optional) Finalize/Export
+    - name: model-storage
+      metadata:
+        labels:
+          ai.sap.com/resourcePlan: train.l
+      inputs:
+        artifacts:
+          - name: trainedModel
+            path: /app/final/model/
+          - name: evalmetrics
+            path: /app/final/metrics/
+      container:
+        image: docker.io/yourusername/invoice-classifier-training:1.0.0
+        command: ["/bin/sh", "-c"]
+        args:
+          - >
+            echo "Model and metrics staged for upload by Argo artifact handling.";
