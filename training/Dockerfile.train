@@ -1,0 +1,30 @@
+# CPU default. For GPU, see note below.
+ARG BASE_IMAGE=python:3.10-slim
+FROM ${BASE_IMAGE}
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    HF_HOME=/tmp/hf_cache \
+    TRANSFORMERS_CACHE=/tmp/hf_cache \
+    OUTPUT_DIR=/mnt/models \
+    DATA_DIR=/mnt/data
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      tini build-essential git curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY requirements-train.txt .
+RUN python -m pip install --upgrade pip && pip install -r requirements-train.txt
+
+COPY train.py /app/train.py
+COPY train.sh /app/train.sh
+RUN chmod +x /app/train.sh
+
+# Non-root
+RUN useradd -m appuser
+USER appuser
+
+ENTRYPOINT ["/usr/bin/tini", "--"]
+CMD ["/app/train.sh"]
