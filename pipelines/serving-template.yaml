@@ -3,27 +3,23 @@ kind: ServingTemplate
 metadata:
   name: invoice-classifier-serving
   annotations:
-    scenarios.ai.sap.com/description: "Blocked invoice classification using Hugging Face Transformers"
     scenarios.ai.sap.com/name: "invoice-classification"
-    executables.ai.sap.com/description: "Classify blocked invoices in SAP S/4HANA"
+    scenarios.ai.sap.com/description: "Blocked invoice classification using DeBERTa-v3-base"
     executables.ai.sap.com/name: "invoice-classifier"
-
-    # ---- Added: declare the input artifact kind (model) ----
+    executables.ai.sap.com/description: "Classify blocked invoices in SAP S/4HANA"
     artifacts.ai.sap.com/invoiceclassifiermodel.kind: "model"
   labels:
     scenarios.ai.sap.com/id: "invoice-classification"
     ai.sap.com/version: "1.0.0"
-
 spec:
   inputs:
-    # ---- Added: artifact placeholder for the trained model from training ----
     artifacts:
       - name: invoiceclassifiermodel
     parameters:
-      - name: modelName
+      - name: serviceName
         type: string
         default: "invoice-classifier"
-      - name: modelVersion
+      - name: imageTag
         type: string
         default: "1.0.0"
       - name: minReplicas
@@ -34,17 +30,18 @@ spec:
         default: 3
       - name: resourcePlan
         type: string
-        default: "infer.s"  # infer.s, infer.m, infer.l
+        default: "infer.s"
       - name: imagePullSecret
         type: string
         default: "docker-registry-secret"
-
+      - name: port
+        type: integer
+        default: 8080
   template:
     apiVersion: "serving.kserve.io/v1beta1"
     kind: InferenceService
     metadata:
-      name: "{{.inputs.parameters.modelName}}"
-      # ---- Added: autoscaling annotations like in B ----
+      name: "{{.inputs.parameters.serviceName}}"
       annotations: |
         autoscaling.knative.dev/metric: concurrency
         autoscaling.knative.dev/target: "1"
@@ -58,35 +55,34 @@ spec:
         minReplicas: {{.inputs.parameters.minReplicas}}
         maxReplicas: {{.inputs.parameters.maxReplicas}}
         containers:
-          - name: kserve-container
-            image: docker.io/yourusername/invoice-classifier:{{.inputs.parameters.modelVersion}}
-            ports:
-              - containerPort: 8080
-                protocol: TCP
-            # ---- Important: point KServe to the model artifact in object storage ----
-            env:
-              - name: STORAGE_URI
-                value: "{{inputs.artifacts.invoiceclassifiermodel}}"
-              - name: PORT
-                value: "8080"
-            resources:
-              requests:
-                memory: "2Gi"
-                cpu: "1000m"
-              limits:
-                memory: "4Gi"
-                cpu: "2000m"
-            livenessProbe:
-              httpGet:
-                path: /health
-                port: 8080
-              initialDelaySeconds: 60
-              periodSeconds: 30
-              timeoutSeconds: 10
-            readinessProbe:
-              httpGet:
-                path: /health
-                port: 8080
-              initialDelaySeconds: 30
-              periodSeconds: 10
-              timeoutSeconds: 5
+        - name: kserve-container
+          image: docker.io/yourrepo/invoice-classifier:{{.inputs.parameters.imageTag}}
+          ports:
+            - containerPort: {{.inputs.parameters.port}}
+              protocol: TCP
+          env:
+            - name: STORAGE_URI
+              value: "{{inputs.artifacts.invoiceclassifiermodel}}"
+            - name: MODEL_PATH
+              value: "/mnt/models"
+            - name: PORT
+              value: "{{.inputs.parameters.port}}"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{.inputs.parameters.port}}
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{.inputs.parameters.port}}
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: "1000m"
+              memory: "2Gi"
+            limits:
+              cpu: "2000m"
+              memory: "4Gi"

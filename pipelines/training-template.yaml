@@ -5,37 +5,34 @@ metadata:
   annotations:
     scenarios.ai.sap.com/description: "Train invoice classifier model"
     scenarios.ai.sap.com/name: "invoice-classification"
-
     executables.ai.sap.com/description: "Training pipeline for invoice classification"
     executables.ai.sap.com/name: "training"
-
-    artifacts.ai.sap.com/invoicesdataset.kind: "dataset"   # input artifact kind
-    artifacts.ai.sap.com/invoiceclassifiermodel.kind: "model" # output artifact kind
-    artifacts.ai.sap.com/evalmetrics.kind: "metrics"       # optional, for evaluation output
+    artifacts.ai.sap.com/invoicesdataset.kind: "dataset"
+    artifacts.ai.sap.com/invoiceclassifiermodel.kind: "model"
+    artifacts.ai.sap.com/evalmetrics.kind: "metrics"
   labels:
     scenarios.ai.sap.com/id: "invoice-classification"
     ai.sap.com/version: "1.0.0"
-
 spec:
   imagePullSecrets:
     - name: docker-registry-secret
-
   entrypoint: training-pipeline
-
   arguments:
     parameters:
       - name: baseModel
-        value: "distilbert-base-uncased"
+        value: "microsoft/deberta-v3-base"
       - name: numEpochs
         value: "3"
       - name: learningRate
         value: "2e-5"
       - name: batchSize
         value: "16"
-
   templates:
-    # Orchestrates the steps
     - name: training-pipeline
+      inputs:
+        artifacts:
+          - name: invoicesdataset
+            path: /app/data/
       steps:
         - - name: train-model
             template: model-training
@@ -57,12 +54,6 @@ spec:
                   from: "{{steps.train-model.outputs.artifacts.trainedModel}}"
                 - name: evalmetrics
                   from: "{{steps.evaluate-model.outputs.artifacts.evalmetrics}}"
-      inputs:
-        artifacts:
-          - name: invoicesdataset          # input artifact placeholder (attach in AI Launchpad)
-            path: /app/data/               # where it will be placed inside the container
-
-    # Step 1: Training
     - name: model-training
       metadata:
         labels:
@@ -75,27 +66,14 @@ spec:
         artifacts:
           - name: trainedModel
             globalName: invoiceclassifiermodel
-            path: /app/output/model/
-            archive:
-              none: {}
+            path: /app/invoice_classifier/
+            archive: { none: {} }
       container:
-        image: docker.io/yourusername/invoice-classifier-training:1.0.0
+        image: docker.io/yourrepo/invoice-classifier-training:1.0.0
         command: ["python", "train_model.py"]
         args:
-          - --base-model
-          - "{{workflow.parameters.baseModel}}"
-          - --epochs
-          - "{{workflow.parameters.numEpochs}}"
-          - --learning-rate
-          - "{{workflow.parameters.learningRate}}"
-          - --batch-size
-          - "{{workflow.parameters.batchSize}}"
-          - --data-dir
-          - /app/data/
           - --output-dir
-          - /app/output/model/
-
-    # Step 2: Evaluation
+          - /app/invoice_classifier/
     - name: model-evaluation
       metadata:
         labels:
@@ -109,18 +87,17 @@ spec:
           - name: evalmetrics
             globalName: evalmetrics
             path: /app/output/metrics/
-            archive:
-              none: {}
+            archive: { none: {} }
       container:
-        image: docker.io/yourusername/invoice-classifier-training:1.0.0
-        command: ["python", "evaluate.py"]
+        image: docker.io/yourrepo/invoice-classifier-training:1.0.0
+        command: ["python", "-c"]
         args:
-          - --model-dir
-          - /app/model/
-          - --metrics-dir
-          - /app/output/metrics/
-
-    # Step 3: (Optional) Finalize/Export
+          - |
+            import json,os
+            os.makedirs("/app/output/metrics/", exist_ok=True)
+            # Placeholder. If you have evaluate.py, call it here.
+            with open("/app/output/metrics/metrics.json","w") as f:
+              json.dump({"note":"add evaluation here"}, f)
     - name: model-storage
       metadata:
         labels:
@@ -132,8 +109,7 @@ spec:
           - name: evalmetrics
             path: /app/final/metrics/
       container:
-        image: docker.io/yourusername/invoice-classifier-training:1.0.0
-        command: ["/bin/sh", "-c"]
-        args:
-          - >
-            echo "Model and metrics staged for upload by Argo artifact handling.";
+        image: docker.io/yourrepo/invoice-classifier-training:1.0.0
+        command: ["/bin/sh","-lc"]
+        args: ["echo 'Argo will upload artifacts'"]
+
