@@ -19,6 +19,9 @@ spec:
   entrypoint: training-pipeline
   arguments:
     parameters:
+      # You will set this to your pushed image, e.g. docker.io/itsmarlo/invoice-train:latest
+      - name: trainImage
+        value: "your-registry/invoice-train:latest"
       - name: baseModel
         value: "microsoft/deberta-v3-base"
       - name: numEpochs
@@ -27,6 +30,8 @@ spec:
         value: "2e-5"
       - name: batchSize
         value: "16"
+      - name: numLabels
+        value: "5"
   templates:
     - name: training-pipeline
       inputs:
@@ -54,26 +59,42 @@ spec:
                   from: "{{steps.train-model.outputs.artifacts.trainedModel}}"
                 - name: evalmetrics
                   from: "{{steps.evaluate-model.outputs.artifacts.evalmetrics}}"
+
+    # === Step 1: Train ===
     - name: model-training
       metadata:
         labels:
-          ai.sap.com/resourcePlan: train.l
+          ai.sap.com/resourcePlan: train.l        # pick your workload class
       inputs:
         artifacts:
           - name: invoicesdataset
-            path: /app/data/
+            path: /app/data/                      # your image symlinks /app/data -> /mnt/data
       outputs:
         artifacts:
           - name: trainedModel
             globalName: invoiceclassifiermodel
-            path: /app/invoice_classifier/
+            path: /app/invoice_classifier/        # we save here via OUTPUT_DIR below
             archive: { none: {} }
       container:
-        image: docker.io/yourrepo/invoice-classifier-training:1.0.0
-        command: ["python", "train_model.py"]
+        image: "{{workflow.parameters.trainImage}}"
+        imagePullPolicy: IfNotPresent
+        command: ["/bin/sh","-lc"]
         args:
-          - --output-dir
-          - /app/invoice_classifier/
+          - |
+            set -e
+            mkdir -p /app/invoice_classifier
+            # Pass hyperparameters as env. Your code reads OUTPUT_DIR and NUM_LABELS.
+            export OUTPUT_DIR=/app/invoice_classifier
+            export NUM_LABELS="{{workflow.parameters.numLabels}}"
+            # Optional envs if your code uses them (safe to keep even if unused)
+            export MODEL_NAME="{{workflow.parameters.baseModel}}"
+            export NUM_EPOCHS="{{workflow.parameters.numEpochs}}"
+            export LEARNING_RATE="{{workflow.parameters.learningRate}}"
+            export BATCH_SIZE="{{workflow.parameters.batchSize}}"
+            # Prefer wrapper if present, else call python directly
+            if [ -x /app/train.sh ]; then /app/train.sh; else python /app/train.py; fi
+
+    # === Step 2: Evaluate (placeholder) ===
     - name: model-evaluation
       metadata:
         labels:
@@ -81,7 +102,7 @@ spec:
       inputs:
         artifacts:
           - name: trainedModel
-            path: /app/model/
+            path: /app/invoice_classifier/        # takes output of training
       outputs:
         artifacts:
           - name: evalmetrics
@@ -89,19 +110,22 @@ spec:
             path: /app/output/metrics/
             archive: { none: {} }
       container:
-        image: docker.io/yourrepo/invoice-classifier-training:1.0.0
-        command: ["python", "-c"]
+        image: "{{workflow.parameters.trainImage}}"
+        imagePullPolicy: IfNotPresent
+        command: ["python","-c"]
         args:
           - |
-            import json,os
+            import json, os
             os.makedirs("/app/output/metrics/", exist_ok=True)
-            # Placeholder. If you have evaluate.py, call it here.
+            # TODO: replace with real evaluation using your val set
             with open("/app/output/metrics/metrics.json","w") as f:
-              json.dump({"note":"add evaluation here"}, f)
+              json.dump({"status":"ok","note":"replace with real evaluation"}, f)
+
+    # === Step 3: Persist artifacts (AI Core collects these) ===
     - name: model-storage
       metadata:
         labels:
-          ai.sap.com/resourcePlan: train.l
+          ai.sap.com/resourcePlan: train.s        # smaller plan is fine
       inputs:
         artifacts:
           - name: trainedModel
@@ -109,7 +133,8 @@ spec:
           - name: evalmetrics
             path: /app/final/metrics/
       container:
-        image: docker.io/yourrepo/invoice-classifier-training:1.0.0
+        image: alpine:3.19
         command: ["/bin/sh","-lc"]
-        args: ["echo 'Argo will upload artifacts'"]
+        args: ["echo 'Artifacts staged at /app/final; AI Core will upload them.'"]
+
 
