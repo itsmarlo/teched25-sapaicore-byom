@@ -3,10 +3,12 @@ kind: WorkflowTemplate
 metadata:
   name: invoice-classifier-training
   annotations:
-    scenarios.ai.sap.com/description: "Train invoice classifier model"
+    # Discovery
     scenarios.ai.sap.com/name: "invoice-classification"
-    executables.ai.sap.com/description: "Training pipeline for invoice classification"
+    scenarios.ai.sap.com/description: "Train invoice classifier model"
     executables.ai.sap.com/name: "training"
+    executables.ai.sap.com/description: "Training pipeline for invoice classification"
+    # Artifacts (discovery + typing)
     artifacts.ai.sap.com/invoicesdataset.kind: "dataset"
     artifacts.ai.sap.com/invoiceclassifiermodel.kind: "model"
     artifacts.ai.sap.com/evalmetrics.kind: "metrics"
@@ -14,15 +16,11 @@ metadata:
     scenarios.ai.sap.com/id: "invoice-classification"
     ai.sap.com/version: "1.0.0"
 spec:
-  imagePullSecrets:
-    - name: docker-registry-secret
   entrypoint: training-pipeline
   arguments:
     parameters:
-      # Training image in your registry
       - name: trainImage
         value: "docker.io/itsmarlo/invoice-train:latest"
-      # Hyperparams below are placeholders; current train.py ignores them.
       - name: baseModel
         value: "microsoft/deberta-v3-base"
       - name: numEpochs
@@ -31,7 +29,6 @@ spec:
         value: "2e-5"
       - name: batchSize
         value: "16"
-      # Used by train.py
       - name: numLabels
         value: "5"
   templates:
@@ -53,16 +50,8 @@ spec:
               artifacts:
                 - name: trainedModel
                   from: "{{steps.train-model.outputs.artifacts.trainedModel}}"
-        - - name: save-model
-            template: model-storage
-            arguments:
-              artifacts:
-                - name: trainedModel
-                  from: "{{steps.train-model.outputs.artifacts.trainedModel}}"
-                - name: evalmetrics
-                  from: "{{steps.evaluate-model.outputs.artifacts.evalmetrics}}"
 
-    # === Step 1: Train ===
+    # Step 1 — Train
     - name: model-training
       metadata:
         labels:
@@ -85,18 +74,16 @@ spec:
           - |
             set -e
             mkdir -p /app/invoice_classifier
-            # Env that train.py actually reads
             export OUTPUT_DIR=/app/invoice_classifier
             export NUM_LABELS="{{workflow.parameters.numLabels}}"
-            # (Optional future wiring—currently unused by your train.py)
+            # optional (if your train.py uses them later)
             export MODEL_NAME="{{workflow.parameters.baseModel}}"
             export NUM_EPOCHS="{{workflow.parameters.numEpochs}}"
             export LEARNING_RATE="{{workflow.parameters.learningRate}}"
             export BATCH_SIZE="{{workflow.parameters.batchSize}}"
-            # Run training (dataset already mounted at /app/data/)
             python /app/train.py
 
-    # === Step 2: Evaluate (placeholder) ===
+    # Step 2 — Evaluate (placeholder)
     - name: model-evaluation
       metadata:
         labels:
@@ -119,23 +106,7 @@ spec:
           - |
             import json, os
             os.makedirs("/app/output/metrics/", exist_ok=True)
-            # TODO: replace with real evaluation using your val set
             with open("/app/output/metrics/metrics.json","w") as f:
               json.dump({"status":"ok","note":"replace with real evaluation"}, f)
 
-    # === Step 3: Persist artifacts (AI Core collects these) ===
-    - name: model-storage
-      metadata:
-        labels:
-          ai.sap.com/resourcePlan: train.s
-      inputs:
-        artifacts:
-          - name: trainedModel
-            path: /app/final/model/
-          - name: evalmetrics
-            path: /app/final/metrics/
-      container:
-        image: alpine:3.19
-        command: ["/bin/sh","-lc"]
-        args: ["echo 'Artifacts staged at /app/final; AI Core will upload them.'"]
 

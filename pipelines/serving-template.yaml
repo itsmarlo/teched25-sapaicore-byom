@@ -3,10 +3,12 @@ kind: ServingTemplate
 metadata:
   name: invoice-classifier-serving
   annotations:
+    # Discovery
     scenarios.ai.sap.com/name: "invoice-classification"
     scenarios.ai.sap.com/description: "Blocked invoice classification using DeBERTa-v3-base"
     executables.ai.sap.com/name: "invoice-classifier"
-    executables.ai.sap.com/description: "Classify blocked invoices in SAP S/4HANA"
+    executables.ai.sap.com/description: "Classify blocked invoices"
+    # Artifacts
     artifacts.ai.sap.com/invoiceclassifiermodel.kind: "model"
   labels:
     scenarios.ai.sap.com/id: "invoice-classification"
@@ -35,3 +37,25 @@ spec:
         type: integer
         default: 3
       - name: resourcePlan
+        type: string
+        default: "serve.s"
+  template:
+    spec:
+      imagePullSecrets:
+        - name: "{{inputs.parameters.imagePullSecret}}"
+      containers:
+        - name: app
+          image: "{{inputs.parameters.image}}"
+          command: ["/bin/sh","-lc"]
+          args:
+            - |
+              python /app/serving.py --port {{inputs.parameters.port}}
+          ports:
+            - containerPort: {{inputs.parameters.port}}
+      scale:
+        minReplicas: {{inputs.parameters.minReplicas}}
+        maxReplicas: {{inputs.parameters.maxReplicas}}
+      metadata:
+        labels:
+          ai.sap.com/resourcePlan: "{{inputs.parameters.resourcePlan}}"
+
