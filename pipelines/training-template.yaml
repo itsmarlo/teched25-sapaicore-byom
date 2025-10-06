@@ -8,21 +8,22 @@ metadata:
     scenarios.ai.sap.com/description: "Train invoice classifier model"
     executables.ai.sap.com/name: "training"
     executables.ai.sap.com/description: "Training pipeline for invoice classification"
-    # Artifacts (discovery + typing)
+    # Artifact typing (names MUST match the artifacts below)
     artifacts.ai.sap.com/invoicesdataset.kind: "dataset"
     artifacts.ai.sap.com/invoiceclassifiermodel.kind: "model"
     artifacts.ai.sap.com/evalmetrics.kind: "metrics"
   labels:
     scenarios.ai.sap.com/id: "invoice-classification"
     ai.sap.com/version: "1.0.0"
+
 spec:
   entrypoint: training-pipeline
   arguments:
     parameters:
       - name: trainImage
-        value: "docker.io/itsmarlo/invoice-train:latest"
+        value: docker.io/itsmarlo/invoice-train:latest
       - name: baseModel
-        value: "microsoft/deberta-v3-base"
+        value: microsoft/deberta-v3-base
       - name: numEpochs
         value: "3"
       - name: learningRate
@@ -31,6 +32,7 @@ spec:
         value: "16"
       - name: numLabels
         value: "5"
+
   templates:
     - name: training-pipeline
       inputs:
@@ -48,8 +50,17 @@ spec:
             template: model-evaluation
             arguments:
               artifacts:
-                - name: trainedModel
-                  from: "{{steps.train-model.outputs.artifacts.trainedModel}}"
+                - name: invoiceclassifiermodel
+                  from: "{{steps.train-model.outputs.artifacts.invoiceclassifiermodel}}"
+        # optional but helpful: stage both outputs under stable paths
+        - - name: stage-outputs
+            template: stage-outputs
+            arguments:
+              artifacts:
+                - name: invoiceclassifiermodel
+                  from: "{{steps.train-model.outputs.artifacts.invoiceclassifiermodel}}"
+                - name: evalmetrics
+                  from: "{{steps.evaluate-model.outputs.artifacts.evalmetrics}}"
 
     # Step 1 — Train
     - name: model-training
@@ -62,7 +73,7 @@ spec:
             path: /app/data/
       outputs:
         artifacts:
-          - name: trainedModel
+          - name: invoiceclassifiermodel          # <-- matches annotation key
             globalName: invoiceclassifiermodel
             path: /app/invoice_classifier/
             archive: { none: {} }
@@ -76,7 +87,6 @@ spec:
             mkdir -p /app/invoice_classifier
             export OUTPUT_DIR=/app/invoice_classifier
             export NUM_LABELS="{{workflow.parameters.numLabels}}"
-            # optional (if your train.py uses them later)
             export MODEL_NAME="{{workflow.parameters.baseModel}}"
             export NUM_EPOCHS="{{workflow.parameters.numEpochs}}"
             export LEARNING_RATE="{{workflow.parameters.learningRate}}"
@@ -87,10 +97,10 @@ spec:
     - name: model-evaluation
       metadata:
         labels:
-          ai.sap.com/resourcePlan: train.l
+          ai.sap.com/resourcePlan: train.s
       inputs:
         artifacts:
-          - name: trainedModel
+          - name: invoiceclassifiermodel
             path: /app/invoice_classifier/
       outputs:
         artifacts:
@@ -109,4 +119,18 @@ spec:
             with open("/app/output/metrics/metrics.json","w") as f:
               json.dump({"status":"ok","note":"replace with real evaluation"}, f)
 
-
+    # Step 3 — Stage outputs (AI Core picks these up)
+    - name: stage-outputs
+      metadata:
+        labels:
+          ai.sap.com/resourcePlan: train.s
+      inputs:
+        artifacts:
+          - name: invoiceclassifiermodel
+            path: /app/final/model/
+          - name: evalmetrics
+            path: /app/final/metrics/
+      container:
+        image: alpine:3.19
+        command: ["/bin/sh","-lc"]
+        args: ["echo 'Artifacts staged at /app/final; AI Core will upload them.'"]
