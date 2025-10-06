@@ -11,6 +11,7 @@ metadata:
   labels:
     scenarios.ai.sap.com/id: "invoice-classification"
     ai.sap.com/version: "1.0.0"
+
 spec:
   inputs:
     artifacts:
@@ -18,22 +19,24 @@ spec:
     parameters:
       - name: image
         type: string
+        default: docker.io/itsmarlo/invoice-serve:latest
       - name: resourcePlan
         type: string
-  template:
+        default: serve.s
+      - name: port
+        type: string
+        default: "8080"
+      # optional:
+      - name: minReplicas
+        type: string
+        default: "1"
+      - name: maxReplicas
+        type: string
+        default: "3"
+
+  # IMPORTANT: 'template' must be a STRING containing the KServe InferenceService YAML
+  template: |
     apiVersion: serving.kserve.io/v1beta1
     kind: InferenceService
     metadata:
-      name: "{{.Name}}"
-      labels:
-        ai.sap.com/resourcePlan: "{{inputs.parameters.resourcePlan}}"
-    spec:
-      predictor:
-        minReplicas: 1
-        maxReplicas: 3
-        containers:
-          - name: kserve-container
-            image: "{{inputs.parameters.image}}"
-            env:
-              - name: MODEL_PATH
-                value: "{{inputs.artifacts.invoiceclassifiermodel}}"
+      n
