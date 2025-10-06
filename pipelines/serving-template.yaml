@@ -3,17 +3,14 @@ kind: ServingTemplate
 metadata:
   name: invoice-classifier-serving
   annotations:
-    # Discovery
     scenarios.ai.sap.com/name: "invoice-classification"
     scenarios.ai.sap.com/description: "Blocked invoice classification using DeBERTa-v3-base"
     executables.ai.sap.com/name: "invoice-classifier"
     executables.ai.sap.com/description: "Classify blocked invoices"
-    # Artifact typing
     artifacts.ai.sap.com/invoiceclassifiermodel.kind: "model"
   labels:
     scenarios.ai.sap.com/id: "invoice-classification"
     ai.sap.com/version: "1.0.0"
-
 spec:
   inputs:
     artifacts:
@@ -34,23 +31,23 @@ spec:
       - name: resourcePlan
         type: string
         default: "serve.s"
-
-  # KServe InferenceService used by AI Core
   template:
     apiVersion: serving.kserve.io/v1beta1
     kind: InferenceService
     metadata:
-      name: "{{ .Name }}"
+      name: "{{.Name}}"
       labels:
         ai.sap.com/resourcePlan: "{{inputs.parameters.resourcePlan}}"
     spec:
       predictor:
         containers:
-          - name: "{{ .Name }}"
+          - name: kserve-container
             image: "{{inputs.parameters.image}}"
-            command: ["/bin/sh","-lc"]
+            command:
+              - "/bin/sh"
+              - "-c"
             args:
-              - python /app/serving.py --port {{inputs.parameters.port}}
+              - "python /app/serving.py --port {{inputs.parameters.port}}"
             env:
               - name: MODEL_PATH
                 value: "{{inputs.artifacts.invoiceclassifiermodel}}"
@@ -58,8 +55,7 @@ spec:
                 value: "{{inputs.parameters.port}}"
             ports:
               - containerPort: {{inputs.parameters.port}}
-      # Optional scaling. Works on AI Core managed KServe.
-      scale:
+                protocol: TCP
         minReplicas: {{inputs.parameters.minReplicas}}
         maxReplicas: {{inputs.parameters.maxReplicas}}
 
