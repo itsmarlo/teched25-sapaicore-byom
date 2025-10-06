@@ -3,17 +3,14 @@ kind: ServingTemplate
 metadata:
   name: invoice-classifier-serving
   annotations:
-    # Discovery
     scenarios.ai.sap.com/name: "invoice-classification"
     scenarios.ai.sap.com/description: "Blocked invoice classification using DeBERTa-v3-base"
     executables.ai.sap.com/name: "invoice-classifier"
     executables.ai.sap.com/description: "Classify blocked invoices"
-    # Artifact typing
     artifacts.ai.sap.com/invoiceclassifiermodel.kind: "model"
   labels:
     scenarios.ai.sap.com/id: "invoice-classification"
     ai.sap.com/version: "1.0.0"
-
 spec:
   inputs:
     artifacts:
@@ -21,32 +18,22 @@ spec:
     parameters:
       - name: image
         type: string
-        default: docker.io/itsmarlo/invoice-serve:latest
       - name: resourcePlan
         type: string
-        default: serve.s
-      - name: port
-        type: integer
-        default: 8080
-
   template:
     apiVersion: serving.kserve.io/v1beta1
     kind: InferenceService
     metadata:
-      name: "{{ .Name }}"
+      name: "{{.Name}}"
       labels:
         ai.sap.com/resourcePlan: "{{inputs.parameters.resourcePlan}}"
     spec:
       predictor:
+        minReplicas: 1
+        maxReplicas: 3
         containers:
-          - name: "{{ .Name }}"
+          - name: kserve-container
             image: "{{inputs.parameters.image}}"
-            command: ["/bin/sh","-lc"]
-            args:
-              - python /app/serving.py --port {{inputs.parameters.port}}
             env:
               - name: MODEL_PATH
                 value: "{{inputs.artifacts.invoiceclassifiermodel}}"
-
-
-
