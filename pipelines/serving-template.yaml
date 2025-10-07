@@ -1,51 +1,53 @@
 apiVersion: ai.sap.com/v1alpha1
 kind: ServingTemplate
 metadata:
-  name: invoice-classifier-serving
+  name: invoice-serving-pipeline
   annotations:
-    scenarios.ai.sap.com/name: "invoice-classification"
-    scenarios.ai.sap.com/description: "Blocked invoice classification using DeBERTa-v3-base"
-    executables.ai.sap.com/name: "invoice-classifier"
-    executables.ai.sap.com/description: "Classify blocked invoices"
+    scenarios.ai.sap.com/name: "Blocked Invoice Classification"
+    scenarios.ai.sap.com/description: "Serve a Hugging Face model for blocked invoice classification"
+
+    executables.ai.sap.com/name: "invoiceclassifierserving"
+    executables.ai.sap.com/description: "Serving for blocked invoice classifier"
+
     artifacts.ai.sap.com/invoiceclassifiermodel.kind: "model"
   labels:
     scenarios.ai.sap.com/id: "invoice-classification"
-    ai.sap.com/version: "1.0.0"
-
+    ai.sap.com/version: "1.0"
 spec:
   inputs:
     artifacts:
       - name: invoiceclassifiermodel
-    parameters:
-      - name: image
-        type: string
-        default: docker.io/itsmarlo/invoice-serve:latest
-      - name: resourcePlan
-        type: string
-        default: serve.s
-      - name: port
-        type: string
-        default: "8080"
-      - name: minReplicas
-        type: string
-        default: "1"
-      - name: maxReplicas
-        type: string
-        default: "3"
-
   template:
-    apiVersion: serving.kserve.io/v1beta1
-    kind: InferenceService
+    apiVersion: "serving.kserve.io/v1beta1"
     metadata:
-      labels:
-        ai.sap.com/resourcePlan: "{{inputs.parameters.resourcePlan}}"
-    spec:
+      annotations: |
+        autoscaling.knative.dev/metric: concurrency
+        autoscaling.knative.dev/target: 1
+        autoscaling.knative.dev/targetBurstCapacity: 0
+      labels: |
+        ai.sap.com/resourcePlan: serve.s
+    spec: |
       predictor:
+        # Uncomment if your image is private
+        # imagePullSecrets:
+        #   - name: your-docker-registry-secret
+
+        minReplicas: 1
+        maxReplicas: 3
         containers:
-          - name: kserve-container
-            image: "{{inputs.parameters.image}}"
-            env:
-              - name: PORT
-                value: "{{inputs.parameters.port}}"
-              - name: MODEL_PATH
-                value: "/mnt/models"
+        - name: kserve-container
+          image: docker.io/itsmarlo/invoice-serve:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          # Your image already has ENTRYPOINT/CMD, so no command/args needed
+          env:
+            # KServe storage-initializer will download the bound artifact to /mnt/models
+            - name: STORAGE_URI
+              value: "{{inputs.artifacts.invoiceclassifiermodel}}"
+            # Your app reads from /mnt/models by default
+            - name: MODEL_PATH
+              value: "/mnt/models"
+            - name: PORT
+              value: "8080"
