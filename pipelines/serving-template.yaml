@@ -26,13 +26,7 @@ spec:
       - name: port
         type: string
         default: "8080"
-      # optional:
-      - name: minReplicas
-        type: string
-        default: "1"
-      - name: maxReplicas
-        type: string
-        default: "3"
+
 
   # IMPORTANT: 'template' must be a STRING containing the KServe InferenceService YAML
   template: |
