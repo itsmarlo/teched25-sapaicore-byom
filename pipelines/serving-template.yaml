@@ -26,11 +26,26 @@ spec:
       - name: port
         type: string
         default: "8080"
+      - name: minReplicas
+        type: string
+        default: "1"
+      - name: maxReplicas
+        type: string
+        default: "3"
 
-
-  # IMPORTANT: 'template' must be a STRING containing the KServe InferenceService YAML
-  template: |
+  template:
     apiVersion: serving.kserve.io/v1beta1
     kind: InferenceService
     metadata:
-      n
+      labels:
+        ai.sap.com/resourcePlan: "{{inputs.parameters.resourcePlan}}"
+    spec:
+      predictor:
+        containers:
+          - name: kserve-container
+            image: "{{inputs.parameters.image}}"
+            env:
+              - name: PORT
+                value: "{{inputs.parameters.port}}"
+              - name: MODEL_PATH
+                value: "/mnt/models"
