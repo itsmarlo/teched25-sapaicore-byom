@@ -1,117 +1,81 @@
-apiVersion: argoproj.io/v1alpha1
-kind: WorkflowTemplate
+apiVersion: ai.sap.com/v1alpha1
+kind: ServingTemplate
 metadata:
-  name: invoice-classifier-training
+  name: invoice-classifier-serving
   annotations:
-    # TechEd 2025 — BYOM Blocked Invoice Classification
     scenarios.ai.sap.com/name: "Blocked Invoice Classification (BYOM)"
-    scenarios.ai.sap.com/description: "Train a Hugging Face model to classify blocked invoices"
-    executables.ai.sap.com/name: "training"
-    executables.ai.sap.com/description: "Training pipeline for blocked-invoice classifier"
-    # Artifact kinds (names must match inputs/outputs below)
-    artifacts.ai.sap.com/invoicesdataset.kind: "dataset"
+    scenarios.ai.sap.com/description: "Serve a Hugging Face model for blocked invoice classification"
+    executables.ai.sap.com/name: "invoiceclassifierserving"
+    executables.ai.sap.com/description: "Serving for blocked invoice classifier"
     artifacts.ai.sap.com/invoiceclassifiermodel.kind: "model"
-    artifacts.ai.sap.com/evalmetrics.kind: "metrics"
   labels:
-    scenarios.ai.sap.com/id: "blocked-invoice-classifier"
+    scenarios.ai.sap.com/id: "invoice-classification"
     ai.sap.com/version: "1.0.0"
 
 spec:
-  # If your image is private or to avoid Hub rate limits, ensure this secret exists in the RG
-  imagePullSecrets:
-    - name: docker-registry-secret  # <-- replace with your actual secret name
-
-  entrypoint: training-pipeline
-
-  arguments:
+  inputs:
+    artifacts:
+      - name: invoiceclassifiermodel
     parameters:
-      - name: trainImage
-        value: docker.io/itsmarlo/invoice-train:latest
-      - name: baseModel
-        value: microsoft/deberta-v3-base
-      - name: numEpochs
-        value: "3"
-      - name: learningRate
-        value: "2e-5"
-      - name: batchSize
-        value: "16"
-      - name: numLabels
-        value: "5"
+      - name: image
+        type: string
+        default: "docker.io/itsmarlo/invoice-serve:latest"
+      - name: imagePullSecret
+        type: string
+        default: "docker-registry-secret"
+      - name: port
+        type: string
+        default: "8080"
+      - name: resourcePlan
+        type: string
+        default: "serve.s"
 
-  templates:
-    - name: training-pipeline
-      inputs:
-        artifacts:
-          - name: invoicesdataset
-            path: /app/data/
-      steps:
-        - - name: train-model
-            template: model-training
-            arguments:
-              artifacts:
-                - name: invoicesdataset
-                  from: "{{inputs.artifacts.invoicesdataset}}"
-        - - name: evaluate-model
-            template: model-evaluation
-            arguments:
-              artifacts:
-                - name: invoiceclassifiermodel
-                  from: "{{steps.train-model.outputs.artifacts.invoiceclassifiermodel}}"
-
-    # Step 1 — Train
-    - name: model-training
-      metadata:
-        labels:
-          ai.sap.com/resourcePlan: train.l
-      inputs:
-        artifacts:
-          - name: invoicesdataset
-            path: /app/data/
-      outputs:
-        artifacts:
-          - name: invoiceclassifiermodel
-            globalName: invoiceclassifiermodel
-            path: /app/invoice_classifier/
-            archive: { none: {} }
-      container:
-        image: "{{workflow.parameters.trainImage}}"
-        imagePullPolicy: IfNotPresent
-        command: ["/bin/sh","-lc"]
-        args:
-          - |
-            set -e
-            mkdir -p /app/invoice_classifier /app/output/metrics
-            export OUTPUT_DIR=/app/invoice_classifier
-            export MODEL_NAME="{{workflow.parameters.baseModel}}"
-            export NUM_EPOCHS="{{workflow.parameters.numEpochs}}"
-            export LEARNING_RATE="{{workflow.parameters.learningRate}}"
-            export BATCH_SIZE="{{workflow.parameters.batchSize}}"
-            export NUM_LABELS="{{workflow.parameters.numLabels}}"
-            python /app/train.py
-
-    # Step 2 — Evaluate (lightweight placeholder; replace with real eval)
-    - name: model-evaluation
-      metadata:
-        labels:
-          ai.sap.com/resourcePlan: train.s
-      inputs:
-        artifacts:
-          - name: invoiceclassifiermodel
-            path: /app/invoice_classifier/
-      outputs:
-        artifacts:
-          - name: evalmetrics
-            globalName: evalmetrics
-            path: /app/output/metrics/
-            archive: { none: {} }
-      container:
-        image: "{{workflow.parameters.trainImage}}"
-        imagePullPolicy: IfNotPresent
-        command: ["python","-c"]
-        args:
-          - |
-            import json, os
-            os.makedirs("/app/output/metrics/", exist_ok=True)
-            with open("/app/output/metrics/metrics.json","w") as f:
-              json.dump({"status":"ok","note":"replace with real evaluation"}, f)
-
+  template:
+    apiVersion: "serving.kserve.io/v1beta1"
+    metadata:
+      annotations: |
+        autoscaling.knative.dev/metric: concurrency
+        autoscaling.knative.dev/target: "1"
+        autoscaling.knative.dev/targetBurstCapacity: "0"
+      labels: |
+        ai.sap.com/resourcePlan: "{{inputs.parameters.resourcePlan}}"
+    spec: |
+      predictor:
+        minReplicas: 1
+        maxReplicas: 3
+        imagePullSecrets:
+          - name: "{{inputs.parameters.imagePullSecret}}"
+        containers:
+          - name: app
+            image: "{{inputs.parameters.image}}"
+            imagePullPolicy: IfNotPresent
+            ports:
+              - containerPort: 8080
+                protocol: TCP
+            env:
+              # AI Core binds the model artifact here; your app loads from /mnt/models
+              - name: STORAGE_URI
+                value: "{{inputs.artifacts.invoiceclassifiermodel}}"
+              - name: MODEL_PATH
+                value: "/mnt/models"
+              - name: PORT
+                value: "{{inputs.parameters.port}}"
+            readinessProbe:
+              httpGet:
+                path: /health
+                port: 8080
+              initialDelaySeconds: 5
+              periodSeconds: 5
+            livenessProbe:
+              httpGet:
+                path: /health
+                port: 8080
+              initialDelaySeconds: 10
+              periodSeconds: 10
+            resources:
+              requests:
+                cpu: "250m"
+                memory: "512Mi"
+              limits:
+                cpu: "1"
+                memory: "1Gi"
