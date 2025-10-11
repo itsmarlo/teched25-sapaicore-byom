@@ -28,12 +28,12 @@ spec:
         ai.sap.com/resourcePlan: serve.s
     spec: |
       predictor:
-        # Uncomment if your image is private
-        # imagePullSecrets:
-        #   - name: your-docker-registry-secret
+      
+        imagePullSecrets:
+        - name: your-docker-registry-secret
 
         minReplicas: 1
-        maxReplicas: 3
+        maxReplicas: 3  #how much to scale up
         containers:
         - name: kserve-container
           image: docker.io/itsmarlo/invoice-serve:latest
@@ -41,7 +41,7 @@ spec:
           ports:
             - containerPort: 8080
               protocol: TCP
-          # Your image already has ENTRYPOINT/CMD, so no command/args needed
+
           env:
             # KServe storage-initializer will download the bound artifact to /mnt/models
             - name: STORAGE_URI
