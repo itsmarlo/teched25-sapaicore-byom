@@ -17,7 +17,7 @@ WORKDIR /app
 COPY training/requirements-train.txt /app/requirements-train.txt
 RUN python -m pip install --upgrade pip && pip install -r /app/requirements-train.txt
 
-# Copy training code (you named it train_model.py)
+# Copy training code
 COPY training/train.py /app/train_model.py
 
 # Run as non-root
