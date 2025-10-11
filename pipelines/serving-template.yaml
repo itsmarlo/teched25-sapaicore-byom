@@ -3,16 +3,14 @@ kind: ServingTemplate
 metadata:
   name: invoice-serving-pipeline
   annotations:
-    scenarios.ai.sap.com/name: "Blocked Invoice Classification"
-    scenarios.ai.sap.com/description: "Serve a Hugging Face model for blocked invoice classification"
-
+    scenarios.ai.sap.com/name: "Blocked Invoice Classification (BYOM)"
+    scenarios.ai.sap.com/description: "Serve a Hugging Face model for blocked invoices"
     executables.ai.sap.com/name: "invoiceclassifierserving"
-    executables.ai.sap.com/description: "Serving for blocked invoice classifier"
-
+    executables.ai.sap.com/description: "Serving with blocked-invoice classifier"
     artifacts.ai.sap.com/invoiceclassifiermodel.kind: "model"
   labels:
-    scenarios.ai.sap.com/id: "invoice-classification"
-    ai.sap.com/version: "1.0"
+    scenarios.ai.sap.com/id: "blocked-invoice-classifier"
+    ai.sap.com/version: "1.0.0"
 spec:
   inputs:
     artifacts:
@@ -28,25 +26,23 @@ spec:
         ai.sap.com/resourcePlan: serve.s
     spec: |
       predictor:
-      
         imagePullSecrets:
-        - name: your-docker-registry-secret
-
+          - name: docker-registry-secret
         minReplicas: 1
-        maxReplicas: 3  #how much to scale up
+        maxReplicas: 3
         containers:
         - name: kserve-container
           image: docker.io/itsmarlo/invoice-serve:latest
-          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
               protocol: TCP
-
+          command: ["/bin/sh","-c"]
+          args:
+            - >
+              /app/serve.sh
           env:
-            # KServe storage-initializer will download the bound artifact to /mnt/models
             - name: STORAGE_URI
               value: "{{inputs.artifacts.invoiceclassifiermodel}}"
-            # Your app reads from /mnt/models by default
             - name: MODEL_PATH
               value: "/mnt/models"
             - name: PORT

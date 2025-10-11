@@ -1,81 +1,56 @@
-apiVersion: ai.sap.com/v1alpha1
-kind: ServingTemplate
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
 metadata:
-  name: invoice-classifier-serving
+  name: invoice-training-pipeline
   annotations:
     scenarios.ai.sap.com/name: "Blocked Invoice Classification (BYOM)"
-    scenarios.ai.sap.com/description: "Serve a Hugging Face model for blocked invoice classification"
-    executables.ai.sap.com/name: "invoiceclassifierserving"
-    executables.ai.sap.com/description: "Serving for blocked invoice classifier"
+    scenarios.ai.sap.com/description: "Train a Hugging Face model for blocked invoices"
+    executables.ai.sap.com/name: "Invoice model training"
+    executables.ai.sap.com/description: "Training with blocked-invoice dataset"
+    artifacts.ai.sap.com/invoicesdataset.kind: "dataset"
     artifacts.ai.sap.com/invoiceclassifiermodel.kind: "model"
   labels:
-    scenarios.ai.sap.com/id: "invoice-classification"
+    scenarios.ai.sap.com/id: "blocked-invoice-classifier"
     ai.sap.com/version: "1.0.0"
-
 spec:
-  inputs:
-    artifacts:
-      - name: invoiceclassifiermodel
+  imagePullSecrets:
+    - name: docker-registry-secret
+  entrypoint: mypipeline
+  arguments:
     parameters:
-      - name: image
-        type: string
-        default: "docker.io/itsmarlo/invoice-serve:latest"
-      - name: imagePullSecret
-        type: string
-        default: "docker-registry-secret"
-      - name: port
-        type: string
-        default: "8080"
-      - name: resourcePlan
-        type: string
-        default: "serve.s"
-
-  template:
-    apiVersion: "serving.kserve.io/v1beta1"
-    metadata:
-      annotations: |
-        autoscaling.knative.dev/metric: concurrency
-        autoscaling.knative.dev/target: "1"
-        autoscaling.knative.dev/targetBurstCapacity: "0"
-      labels: |
-        ai.sap.com/resourcePlan: "{{inputs.parameters.resourcePlan}}"
-    spec: |
-      predictor:
-        minReplicas: 1
-        maxReplicas: 3
-        imagePullSecrets:
-          - name: "{{inputs.parameters.imagePullSecret}}"
-        containers:
-          - name: app
-            image: "{{inputs.parameters.image}}"
-            imagePullPolicy: IfNotPresent
-            ports:
-              - containerPort: 8080
-                protocol: TCP
-            env:
-              # AI Core binds the model artifact here; your app loads from /mnt/models
-              - name: STORAGE_URI
-                value: "{{inputs.artifacts.invoiceclassifiermodel}}"
-              - name: MODEL_PATH
-                value: "/mnt/models"
-              - name: PORT
-                value: "{{inputs.parameters.port}}"
-            readinessProbe:
-              httpGet:
-                path: /health
-                port: 8080
-              initialDelaySeconds: 5
-              periodSeconds: 5
-            livenessProbe:
-              httpGet:
-                path: /health
-                port: 8080
-              initialDelaySeconds: 10
-              periodSeconds: 10
-            resources:
-              requests:
-                cpu: "250m"
-                memory: "512Mi"
-              limits:
-                cpu: "1"
-                memory: "1Gi"
+      - name: BASE_MODEL
+      - name: NUM_EPOCHS
+      - name: LEARNING_RATE
+      - name: BATCH_SIZE
+      - name: NUM_LABELS
+  templates:
+  - name: mypipeline
+    inputs:
+      artifacts:
+        - name: invoicesdataset
+          path: /app/data/
+    outputs:
+      artifacts:
+        - name: invoiceclassifiermodel
+          globalName: invoiceclassifiermodel
+          path: /app/invoice_classifier/
+          archive:
+            none: {}
+    container:
+      image: docker.io/itsmarlo/invoice-train:latest
+      command: ["/bin/sh","-c"]
+      env:
+        - name: MODEL_NAME
+          value: "{{workflow.parameters.BASE_MODEL}}"
+        - name: NUM_EPOCHS
+          value: "{{workflow.parameters.NUM_EPOCHS}}"
+        - name: LEARNING_RATE
+          value: "{{workflow.parameters.LEARNING_RATE}}"
+        - name: BATCH_SIZE
+          value: "{{workflow.parameters.BATCH_SIZE}}"
+        - name: NUM_LABELS
+          value: "{{workflow.parameters.NUM_LABELS}}"
+        - name: OUTPUT_DIR
+          value: "/app/invoice_classifier"
+      args:
+        - "python /app/train.py"
