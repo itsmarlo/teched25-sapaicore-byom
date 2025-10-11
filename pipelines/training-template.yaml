@@ -3,21 +3,26 @@ kind: WorkflowTemplate
 metadata:
   name: invoice-classifier-training
   annotations:
-    # Discovery
-    scenarios.ai.sap.com/name: "invoice-classification"
-    scenarios.ai.sap.com/description: "Train invoice classifier model"
+    # TechEd 2025 — BYOM Blocked Invoice Classification
+    scenarios.ai.sap.com/name: "Blocked Invoice Classification (BYOM)"
+    scenarios.ai.sap.com/description: "Train a Hugging Face model to classify blocked invoices"
     executables.ai.sap.com/name: "training"
-    executables.ai.sap.com/description: "Training pipeline for invoice classification"
-    # Artifact typing (names MUST match the artifacts below)
+    executables.ai.sap.com/description: "Training pipeline for blocked-invoice classifier"
+    # Artifact kinds (names must match inputs/outputs below)
     artifacts.ai.sap.com/invoicesdataset.kind: "dataset"
     artifacts.ai.sap.com/invoiceclassifiermodel.kind: "model"
     artifacts.ai.sap.com/evalmetrics.kind: "metrics"
   labels:
-    scenarios.ai.sap.com/id: "invoice-classification"
+    scenarios.ai.sap.com/id: "blocked-invoice-classifier"
     ai.sap.com/version: "1.0.0"
 
 spec:
+  # If your image is private or to avoid Hub rate limits, ensure this secret exists in the RG
+  imagePullSecrets:
+    - name: docker-registry-secret  # <-- replace with your actual secret name
+
   entrypoint: training-pipeline
+
   arguments:
     parameters:
       - name: trainImage
@@ -52,15 +57,6 @@ spec:
               artifacts:
                 - name: invoiceclassifiermodel
                   from: "{{steps.train-model.outputs.artifacts.invoiceclassifiermodel}}"
-        # optional but helpful: stage both outputs under stable paths
-        - - name: stage-outputs
-            template: stage-outputs
-            arguments:
-              artifacts:
-                - name: invoiceclassifiermodel
-                  from: "{{steps.train-model.outputs.artifacts.invoiceclassifiermodel}}"
-                - name: evalmetrics
-                  from: "{{steps.evaluate-model.outputs.artifacts.evalmetrics}}"
 
     # Step 1 — Train
     - name: model-training
@@ -73,7 +69,7 @@ spec:
             path: /app/data/
       outputs:
         artifacts:
-          - name: invoiceclassifiermodel          # <-- matches annotation key
+          - name: invoiceclassifiermodel
             globalName: invoiceclassifiermodel
             path: /app/invoice_classifier/
             archive: { none: {} }
@@ -84,16 +80,16 @@ spec:
         args:
           - |
             set -e
-            mkdir -p /app/invoice_classifier
+            mkdir -p /app/invoice_classifier /app/output/metrics
             export OUTPUT_DIR=/app/invoice_classifier
-            export NUM_LABELS="{{workflow.parameters.numLabels}}"
             export MODEL_NAME="{{workflow.parameters.baseModel}}"
             export NUM_EPOCHS="{{workflow.parameters.numEpochs}}"
             export LEARNING_RATE="{{workflow.parameters.learningRate}}"
             export BATCH_SIZE="{{workflow.parameters.batchSize}}"
+            export NUM_LABELS="{{workflow.parameters.numLabels}}"
             python /app/train.py
 
-    # Step 2 — Evaluate (placeholder)
+    # Step 2 — Evaluate (lightweight placeholder; replace with real eval)
     - name: model-evaluation
       metadata:
         labels:
@@ -119,18 +115,3 @@ spec:
             with open("/app/output/metrics/metrics.json","w") as f:
               json.dump({"status":"ok","note":"replace with real evaluation"}, f)
 
-    # Step 3 — Stage outputs (AI Core picks these up)
-    - name: stage-outputs
-      metadata:
-        labels:
-          ai.sap.com/resourcePlan: train.s
-      inputs:
-        artifacts:
-          - name: invoiceclassifiermodel
-            path: /app/final/model/
-          - name: evalmetrics
-            path: /app/final/metrics/
-      container:
-        image: alpine:3.19
-        command: ["/bin/sh","-lc"]
-        args: ["echo 'Artifacts staged at /app/final; AI Core will upload them.'"]
