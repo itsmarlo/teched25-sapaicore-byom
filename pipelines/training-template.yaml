@@ -27,7 +27,7 @@ spec:
   - name: mypipeline
     inputs:
       artifacts:
-        - name: invoicesdataset
+        - name: invoicesdataset-v2
           path: /app/data/
     outputs:
       artifacts:

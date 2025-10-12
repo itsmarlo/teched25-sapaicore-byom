@@ -4,7 +4,7 @@ Optimized for SAP AI Core deployment
 """
 
 import os
-import json
+import jsons
 import torch
 import pandas as pd
 from transformers import (
@@ -17,14 +17,23 @@ from transformers import (
 from datasets import Dataset
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 
-def load_label_map(path="label_map.json"):
+def load_label_map(path=None):
+    """Load label mapping from JSON file"""
+    if path is None:
+        data_path = os.getenv("DATA_PATH", "/app/data")
+        path = os.path.join(data_path, "label_map.json")
+    
     if os.path.exists(path):
+        print(f"Loading label map from: {path}")
         with open(path) as f:
             m = json.load(f)
         # keep both directions
         id2label = {int(v): k for k, v in m.items()} if all(isinstance(v, int) for v in m.values()) else {int(k): v for k, v in m.items()}
         label2id = {v: k for k, v in id2label.items()}
+        print(f"Loaded {len(id2label)} labels: {id2label}")
         return id2label, label2id
+    
+    print(f"Warning: label_map.json not found at {path}")
     return None, None
 
 class InvoiceClassificationTrainer:
@@ -36,14 +45,54 @@ class InvoiceClassificationTrainer:
         self.id2label, self.label2id = load_label_map()
 
     def load_data(self):
-        train_df = pd.read_csv('data/train.csv')
-        val_df   = pd.read_csv('data/validation.csv')
+        """Load training and validation data from artifact mount point"""
+        # Get data path from environment variable
+        data_path = os.getenv("DATA_PATH", "/app/data")
+        
+        print(f"\n=== Loading Data ===")
+        print(f"Data path: {data_path}")
+        
+        # Check if directory exists and list contents
+        if os.path.exists(data_path):
+            contents = os.listdir(data_path)
+            print(f"Directory contents: {contents}")
+        else:
+            raise FileNotFoundError(f"Data directory not found: {data_path}")
+        
+        # Define file paths
+        train_path = os.path.join(data_path, 'train.csv')
+        val_path = os.path.join(data_path, 'validation.csv')
+        
+        # Check if files exist
+        if not os.path.exists(train_path):
+            raise FileNotFoundError(f"Training data not found at {train_path}")
+        if not os.path.exists(val_path):
+            raise FileNotFoundError(f"Validation data not found at {val_path}")
+        
+        # Load data
+        print(f"Loading training data from: {train_path}")
+        train_df = pd.read_csv(train_path)
+        print(f"Loading validation data from: {val_path}")
+        val_df = pd.read_csv(val_path)
+        
+        print(f"Loaded {len(train_df)} training samples and {len(val_df)} validation samples")
+        print(f"Columns: {train_df.columns.tolist()}")
+        
         # If labels are strings and label_map exists, map them to ids
         if self.label2id and train_df['label'].dtype == object:
+            print("Mapping string labels to IDs...")
             train_df['label'] = train_df['label'].map(self.label2id)
-            val_df['label']   = val_df['label'].map(self.label2id)
+            val_df['label'] = val_df['label'].map(self.label2id)
+        
+        # Check for NaN labels
+        if train_df['label'].isna().any():
+            print(f"Warning: Found {train_df['label'].isna().sum()} NaN labels in training data")
+        if val_df['label'].isna().any():
+            print(f"Warning: Found {val_df['label'].isna().sum()} NaN labels in validation data")
+        
         train_dataset = Dataset.from_pandas(train_df[['text', 'label']])
-        val_dataset   = Dataset.from_pandas(val_df[['text', 'label']])
+        val_dataset = Dataset.from_pandas(val_df[['text', 'label']])
+        
         return train_dataset, val_dataset
 
     def tokenize_function(self, examples):
@@ -57,12 +106,28 @@ class InvoiceClassificationTrainer:
     def compute_metrics(self, eval_pred):
         logits, labels = eval_pred
         preds = logits.argmax(axis=-1)
-        precision, recall, f1, _ = precision_recall_fscore_support(labels, preds, average='weighted', zero_division=0)
+        precision, recall, f1, _ = precision_recall_fscore_support(
+            labels, preds, average='weighted', zero_division=0
+        )
         acc = accuracy_score(labels, preds)
-        return {'accuracy': acc, 'f1': f1, 'precision': precision, 'recall': recall}
+        return {
+            'accuracy': acc,
+            'f1': f1,
+            'precision': precision,
+            'recall': recall
+        }
 
-    def train(self, output_dir='./invoice_classifier'):
-        print("Loading tokenizer and model...")
+    def train(self, output_dir='/tmp/outputs/invoice_classifier'):
+        """Train the model and save to output directory"""
+        print("\n=== Starting Training Process ===")
+        print(f"Model: {self.model_name}")
+        print(f"Number of labels: {self.num_labels}")
+        print(f"Output directory: {output_dir}")
+        
+        # Create output directory
+        os.makedirs(output_dir, exist_ok=True)
+        
+        print("\nLoading tokenizer and model...")
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, use_fast=True)
         self.model = AutoModelForSequenceClassification.from_pretrained(
             self.model_name,
@@ -71,10 +136,10 @@ class InvoiceClassificationTrainer:
             label2id=self.label2id
         )
 
-        print("Loading and tokenizing datasets...")
+        print("\nLoading and tokenizing datasets...")
         train_ds, val_ds = self.load_data()
         train_ds = train_ds.map(self.tokenize_function, batched=True)
-        val_ds   = val_ds.map(self.tokenize_function, batched=True)
+        val_ds = val_ds.map(self.tokenize_function, batched=True)
 
         data_collator = DataCollatorWithPadding(tokenizer=self.tokenizer)
 
@@ -90,8 +155,9 @@ class InvoiceClassificationTrainer:
             load_best_model_at_end=True,
             metric_for_best_model="f1",
             push_to_hub=False,
-            logging_dir='./logs',
-            logging_steps=20
+            logging_dir=f'{output_dir}/logs',
+            logging_steps=20,
+            report_to="none"  # Disable wandb/tensorboard for AI Core
         )
 
         trainer = Trainer(
@@ -104,12 +170,12 @@ class InvoiceClassificationTrainer:
             compute_metrics=self.compute_metrics
         )
 
-        print("Starting training...")
+        print("\n=== Training Started ===")
         train_result = trainer.train()
-        print("\nTraining completed!")
+        print("\n=== Training Completed ===")
         print(f"Training loss: {train_result.training_loss:.4f}")
 
-        print("\nEvaluating model...")
+        print("\n=== Evaluating Model ===")
         eval_results = trainer.evaluate()
         for k, v in eval_results.items():
             try:
@@ -117,28 +183,61 @@ class InvoiceClassificationTrainer:
             except Exception:
                 print(f"  {k}: {v}")
 
-        print(f"\nSaving model to {output_dir}...")
+        print(f"\n=== Saving Model ===")
+        print(f"Saving to: {output_dir}")
         trainer.save_model(output_dir)
         self.tokenizer.save_pretrained(output_dir)
 
+        # Save training metadata
         metadata = {
             "model_name": self.model_name,
             "num_labels": self.num_labels,
             "training_loss": float(train_result.training_loss),
-            "eval_results": {k: (float(v) if isinstance(v, (int, float)) else v) for k, v in eval_results.items()},
+            "eval_results": {
+                k: (float(v) if isinstance(v, (int, float)) else v)
+                for k, v in eval_results.items()
+            },
             "id2label": self.id2label
         }
-        with open(f'{output_dir}/training_metadata.json', 'w') as f:
+        
+        metadata_path = os.path.join(output_dir, 'training_metadata.json')
+        with open(metadata_path, 'w') as f:
             json.dump(metadata, f, indent=2)
+        print(f"Saved metadata to: {metadata_path}")
 
+        print("\n=== Training Pipeline Completed Successfully ===")
         return trainer
 
 def main():
-    trainer = InvoiceClassificationTrainer(
-        model_name="microsoft/deberta-v3-base",
-        num_labels=int(os.getenv("NUM_LABELS", "5"))
-    )
-    trainer.train(output_dir=os.getenv("OUTPUT_DIR", "./invoice_classifier"))
+    """Main training function"""
+    print("="*60)
+    print("Invoice Classification Training - SAP AI Core")
+    print("="*60)
+    
+    # Get configuration from environment variables
+    model_name = os.getenv("MODEL_NAME", "microsoft/deberta-v3-base")
+    num_labels = int(os.getenv("NUM_LABELS", "5"))
+    output_dir = os.getenv("OUTPUT_DIR", "/tmp/outputs/invoice_classifier")
+    
+    print(f"\nConfiguration:")
+    print(f"  Model: {model_name}")
+    print(f"  Number of labels: {num_labels}")
+    print(f"  Output directory: {output_dir}")
+    print(f"  Data path: {os.getenv('DATA_PATH', '/app/data')}")
+    
+    try:
+        trainer = InvoiceClassificationTrainer(
+            model_name=model_name,
+            num_labels=num_labels
+        )
+        trainer.train(output_dir=output_dir)
+        
+        print("\n✓ Training completed successfully!")
+        
+    except Exception as e:
+        print(f"\n✗ Training failed with error:")
+        print(f"  {type(e).__name__}: {str(e)}")
+        raise
 
 if __name__ == "__main__":
     main()
