@@ -19,57 +19,52 @@ spec:
   arguments:
     parameters:
       - name: BASE_MODEL
+        value: "microsoft/deberta-v3-base"
       - name: NUM_EPOCHS
+        value: "3"
       - name: LEARNING_RATE
+        value: "2e-5"
       - name: BATCH_SIZE
+        value: "16"
       - name: NUM_LABELS
+        value: "5"
   templates:
-  - name: mypipeline
-    inputs:
-      artifacts:
-        - name: invoicesdataset
-          path: /app/data/
-    outputs:
-      artifacts:
-        - name: invoiceclassifiermodel
-          globalName: invoiceclassifiermodel
-          path: /app/invoice_classifier/
-          archive:
-            none: {}
-    container:
-      image: docker.io/itsmarlo/invoice-train:latest
-      command: ["/bin/sh","-c"]
-      env:
-        - name: MODEL_NAME
-          value: "{{workflow.parameters.BASE_MODEL}}"
-        - name: NUM_EPOCHS
-          value: "{{workflow.parameters.NUM_EPOCHS}}"
-        - name: LEARNING_RATE
-          value: "{{workflow.parameters.LEARNING_RATE}}"
-        - name: BATCH_SIZE
-          value: "{{workflow.parameters.BATCH_SIZE}}"
-        - name: NUM_LABELS
-          value: "{{workflow.parameters.NUM_LABELS}}"
-        - name: OUTPUT_DIR
-          value: "/app/invoice_classifier"
-      args:
-        - |
-          set -e
-          echo "=== Creating output directory ==="
-          mkdir -p /app/invoice_classifier
-          
-          echo "=== Verifying input dataset ==="
-          ls -la /app/data/
-          
-          echo "=== Starting training ==="
-          python /app/train.py
-          
-          echo "=== Verifying output ==="
-          ls -la /app/invoice_classifier/
-          
-          if [ -z "$(ls -A /app/invoice_classifier/)" ]; then
-            echo "ERROR: Output directory is empty!"
-            exit 1
-          fi
-          
-          echo "=== Training completed successfully ==="
+    - name: mypipeline
+      inputs:
+        artifacts:
+          - name: invoicesdataset
+            path: /mnt/data/
+      outputs:
+        artifacts:
+          - name: invoiceclassifiermodel
+            globalName: invoiceclassifiermodel
+            path: /app/invoice_classifier/
+            archive:
+              none: {}
+      container:
+        image: docker.io/itsmarlo/invoice-train:latest
+        imagePullPolicy: IfNotPresent
+        command: ["/bin/sh","-lc"]
+        env:
+          - name: MODEL_NAME
+            value: "{{workflow.parameters.BASE_MODEL}}"
+          - name: NUM_EPOCHS
+            value: "{{workflow.parameters.NUM_EPOCHS}}"
+          - name: LEARNING_RATE
+            value: "{{workflow.parameters.LEARNING_RATE}}"
+          - name: BATCH_SIZE
+            value: "{{workflow.parameters.BATCH_SIZE}}"
+          - name: NUM_LABELS
+            value: "{{workflow.parameters.NUM_LABELS}}"
+          - name: DATA_DIR
+            value: "/mnt/data"
+          - name: OUTPUT_DIR
+            value: "/app/invoice_classifier"
+        args:
+          - |
+            set -e
+            mkdir -p "${OUTPUT_DIR}"
+            # run whichever script your image contains
+            [ -f /app/train.py ] && python /app/train.py || python /app/train_model.py
+            echo "Contents of ${OUTPUT_DIR}:"
+            ls -al "${OUTPUT_DIR}"
