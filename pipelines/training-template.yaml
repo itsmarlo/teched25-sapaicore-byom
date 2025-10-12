@@ -45,8 +45,8 @@ spec:
               none: {}
       container:
         image: docker.io/itsmarlo/invoice-train:latest
-        imagePullPolicy: IfNotPresent
-        command: ["/bin/sh","-lc"]
+        imagePullPolicy: Always
+        command: ["/bin/bash", "-c"]
         env:
           - name: MODEL_NAME
             value: "{{workflow.parameters.BASE_MODEL}}"
@@ -58,6 +58,8 @@ spec:
             value: "{{workflow.parameters.BATCH_SIZE}}"
           - name: NUM_LABELS
             value: "{{workflow.parameters.NUM_LABELS}}"
+          - name: DATA_PATH
+            value: "/mnt/data"
           - name: DATA_DIR
             value: "/mnt/data"
           - name: OUTPUT_DIR
@@ -65,6 +67,20 @@ spec:
         args:
           - |
             set -e
-            python /app/train.py
-            echo "==== Contents of ${OUTPUT_DIR} ===="
-            ls -al "${OUTPUT_DIR}"
+            echo "==== Environment Check ===="
+            echo "DATA_PATH: ${DATA_PATH}"
+            echo "DATA_DIR: ${DATA_DIR}"
+            echo "OUTPUT_DIR: ${OUTPUT_DIR}"
+            echo "MODEL_NAME: ${MODEL_NAME}"
+            
+            echo "==== Contents of /mnt/data ===="
+            ls -la /mnt/data/ || echo "Directory not accessible"
+            
+            echo "==== Contents of /mnt/models ===="
+            ls -la /mnt/models/ || echo "Directory not accessible"
+            
+            echo "==== Starting Training ===="
+            python /app/train_model.py
+            
+            echo "==== Training Complete - Output Contents ===="
+            ls -la "${OUTPUT_DIR}"
