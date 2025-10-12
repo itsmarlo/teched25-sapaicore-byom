@@ -65,7 +65,6 @@ spec:
         args:
           - |
             set -e
-            mkdir -p "${OUTPUT_DIR}"
             python /app/train.py
             echo "==== Contents of ${OUTPUT_DIR} ===="
             ls -al "${OUTPUT_DIR}"
