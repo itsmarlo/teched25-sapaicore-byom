@@ -1,6 +1,8 @@
+# ====== Base image ======
 ARG BASE_IMAGE=python:3.10-slim
 FROM ${BASE_IMAGE}
 
+# ====== Environment configuration ======
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
@@ -9,22 +11,24 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     DATA_DIR=/mnt/data \
     OUTPUT_DIR=/mnt/models
 
+# ====== System setup ======
 RUN apt-get update && apt-get install -y --no-install-recommends tini && rm -rf /var/lib/apt/lists/*
 
+# ====== Set working directory ======
 WORKDIR /app
 
-# Install training deps (from training/)
-COPY training/requirements-train.txt /app/requirements-train.txt
-RUN python -m pip install --upgrade pip && pip install -r /app/requirements-train.txt
+# ====== Install Python dependencies ======
+COPY requirements-train.txt /app/requirements-train.txt
+RUN pip install --upgrade pip && pip install -r /app/requirements-train.txt
 
-# Copy training code
-COPY training/train.py /app/train.py
+# ====== Copy training code ======
+COPY train.py /app/train.py
 
-# Run as non-root
+# ====== Create non-root user ======
 RUN useradd -m appuser
 USER appuser
 
 ENTRYPOINT ["/usr/bin/tini", "--"]
 
-# Create /app/data symlink → /mnt/data, ensure OUTPUT_DIR, then run training
-CMD ["bash","-lc","mkdir -p /app/data && ln -sfn ${DATA_DIR:-/mnt/data} /app/data && mkdir -p ${OUTPUT_DIR:-/mnt/models} && python /app/train.py"]
+# ====== Run training ======
+CMD ["bash", "-lc", "mkdir -p /app/data && ln -sfn ${DATA_DIR:-/mnt/data} /app/data && mkdir -p ${OUTPUT_DIR:-/mnt/models} && python /app/train.py"]
