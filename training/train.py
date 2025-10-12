@@ -4,7 +4,7 @@ Optimized for SAP AI Core deployment
 """
 
 import os
-import jsons
+import json
 import torch
 import pandas as pd
 from transformers import (

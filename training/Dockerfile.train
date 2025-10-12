@@ -18,7 +18,7 @@ COPY training/requirements-train.txt /app/requirements-train.txt
 RUN python -m pip install --upgrade pip && pip install -r /app/requirements-train.txt
 
 # Copy training code
-COPY training/train.py /app/train_model.py
+COPY training/train.py /app/train.py
 
 # Run as non-root
 RUN useradd -m appuser
@@ -27,4 +27,4 @@ USER appuser
 ENTRYPOINT ["/usr/bin/tini", "--"]
 
 # Create /app/data symlink → /mnt/data, ensure OUTPUT_DIR, then run training
-CMD ["bash","-lc","mkdir -p /app/data && ln -sfn ${DATA_DIR:-/mnt/data} /app/data && mkdir -p ${OUTPUT_DIR:-/mnt/models} && python /app/train_model.py"]
+CMD ["bash","-lc","mkdir -p /app/data && ln -sfn ${DATA_DIR:-/mnt/data} /app/data && mkdir -p ${OUTPUT_DIR:-/mnt/models} && python /app/train.py"]
