@@ -12,6 +12,7 @@ metadata:
   labels:
     scenarios.ai.sap.com/id: "blocked-invoice-classifier"
     ai.sap.com/version: "1.0.0"
+
 spec:
   imagePullSecrets:
     - name: docker-registry-secret
@@ -28,6 +29,7 @@ spec:
         value: "16"
       - name: NUM_LABELS
         value: "5"
+
   templates:
     - name: mypipeline
       inputs:
@@ -35,12 +37,12 @@ spec:
           - name: invoicesdataset
             path: /mnt/data/
       outputs:
-  artifacts:
-    - name: trainedModel
-      globalName: invoiceclassifiermodel
-      path: /mnt/models/
-      archive: { none: {} }
-      
+        artifacts:
+          - name: invoiceclassifiermodel
+            globalName: invoiceclassifiermodel
+            path: /mnt/models/
+            archive:
+              none: {}
       container:
         image: docker.io/itsmarlo/invoice-train:latest
         imagePullPolicy: IfNotPresent
@@ -59,13 +61,11 @@ spec:
           - name: DATA_DIR
             value: "/mnt/data"
           - name: OUTPUT_DIR
-            value: "/app/invoice_classifier"
+            value: "/mnt/models"
         args:
           - |
             set -e
-            mkdir -p /mnt/models
-            export OUTPUT_DIR=/mnt/models
-            export NUM_LABELS="{{workflow.parameters.numLabels}}"
+            mkdir -p "${OUTPUT_DIR}"
             python /app/train.py
-            echo "Model files:"
-            ls -al /mnt/models
+            echo "==== Contents of ${OUTPUT_DIR} ===="
+            ls -al "${OUTPUT_DIR}"
