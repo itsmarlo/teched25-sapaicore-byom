@@ -53,4 +53,23 @@ spec:
         - name: OUTPUT_DIR
           value: "/app/invoice_classifier"
       args:
-        - "python /app/train.py"
+        - |
+          set -e
+          echo "=== Creating output directory ==="
+          mkdir -p /app/invoice_classifier
+          
+          echo "=== Verifying input dataset ==="
+          ls -la /app/data/
+          
+          echo "=== Starting training ==="
+          python /app/train.py
+          
+          echo "=== Verifying output ==="
+          ls -la /app/invoice_classifier/
+          
+          if [ -z "$(ls -A /app/invoice_classifier/)" ]; then
+            echo "ERROR: Output directory is empty!"
+            exit 1
+          fi
+          
+          echo "=== Training completed successfully ==="
