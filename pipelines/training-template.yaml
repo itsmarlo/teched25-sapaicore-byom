@@ -35,12 +35,12 @@ spec:
           - name: invoicesdataset
             path: /mnt/data/
       outputs:
-        artifacts:
-          - name: invoiceclassifiermodel
-            globalName: invoiceclassifiermodel
-            path: /app/invoice_classifier/
-            archive:
-              none: {}
+  artifacts:
+    - name: trainedModel
+      globalName: invoiceclassifiermodel
+      path: /mnt/models/
+      archive: { none: {} }
+      
       container:
         image: docker.io/itsmarlo/invoice-train:latest
         imagePullPolicy: IfNotPresent
@@ -63,8 +63,9 @@ spec:
         args:
           - |
             set -e
-            mkdir -p "${OUTPUT_DIR}"
-            # run whichever script your image contains
-            [ -f /app/train.py ] && python /app/train.py || python /app/train_model.py
-            echo "Contents of ${OUTPUT_DIR}:"
-            ls -al "${OUTPUT_DIR}"
+            mkdir -p /mnt/models
+            export OUTPUT_DIR=/mnt/models
+            export NUM_LABELS="{{workflow.parameters.numLabels}}"
+            python /app/train.py
+            echo "Model files:"
+            ls -al /mnt/models
