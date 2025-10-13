@@ -4,16 +4,11 @@ Optimized for SAP AI Core deployment
 """
 
 import os
-from pathlib import Path
-
-output_dir = os.getenv("OUTPUT_DIR", "/mnt/models")
-Path(output_dir).mkdir(parents=True, exist_ok=True)
-os.chmod(output_dir, 0o777)  # give full access
-
 import json
 import torch
 import pandas as pd
 import numpy as np
+from pathlib import Path
 from transformers import (
     AutoTokenizer,
     AutoModelForSequenceClassification,
@@ -23,7 +18,6 @@ from transformers import (
 )
 from datasets import Dataset
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support
-from pathlib import Path
 
 
 # ======================================================
@@ -39,7 +33,6 @@ def load_label_map(path=None):
         print(f"Loading label map from: {path}")
         with open(path) as f:
             m = json.load(f)
-        # handle both string→int and int→string mappings
         id2label = (
             {int(v): k for k, v in m.items()}
             if all(isinstance(v, int) for v in m.values())
@@ -64,6 +57,12 @@ class InvoiceClassificationTrainer:
         self.model = None
         self.id2label, self.label2id = load_label_map()
 
+        # fallback if no label_map.json
+        if self.id2label is None or self.label2id is None:
+            print("No label map found. Using default numeric labels.")
+            self.id2label = {i: str(i) for i in range(self.num_labels)}
+            self.label2id = {str(i): i for i in range(self.num_labels)}
+
     def load_data(self):
         """Load train/validation CSVs from mounted S3 dataset"""
         data_path = os.getenv("DATA_PATH", "/mnt/data")
@@ -86,7 +85,7 @@ class InvoiceClassificationTrainer:
         val_df = pd.read_csv(val_path)
         print(f"Loaded {len(train_df)} train / {len(val_df)} validation samples")
 
-        # map text labels → ints if label_map available
+        # map text labels → ints if available
         if self.label2id and train_df["label"].dtype == object:
             train_df["label"] = train_df["label"].map(self.label2id)
             val_df["label"] = val_df["label"].map(self.label2id)
@@ -116,16 +115,23 @@ class InvoiceClassificationTrainer:
         print(f"Num labels: {self.num_labels}")
         print(f"Output dir: {output_dir}")
 
-        # Ensure output directory exists so Argo can collect it
         Path(output_dir).mkdir(parents=True, exist_ok=True)
+        try:
+            os.chmod(output_dir, 0o777)
+        except PermissionError:
+            print(f"Warning: Could not change permissions for {output_dir}")
 
         print("\nLoading tokenizer/model...")
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, use_fast=True)
+
+        # dynamically decide which args to pass
+        model_args = {"num_labels": self.num_labels}
+        if self.id2label and self.label2id:
+            model_args["id2label"] = self.id2label
+            model_args["label2id"] = self.label2id
+
         self.model = AutoModelForSequenceClassification.from_pretrained(
-            self.model_name,
-            num_labels=self.num_labels,
-            id2label=self.id2label,
-            label2id=self.label2id,
+            self.model_name, **model_args
         )
 
         print("\nPreparing datasets...")
@@ -173,7 +179,7 @@ class InvoiceClassificationTrainer:
         trainer.save_model(output_dir)
         self.tokenizer.save_pretrained(output_dir)
 
-        # Save training metadata
+        # Save metadata
         metadata = {
             "model_name": self.model_name,
             "num_labels": self.num_labels,
@@ -213,9 +219,13 @@ def main():
         trainer.train(output_dir=output_dir)
         print("\n✓ Training finished successfully.")
     except Exception as e:
+        Path(output_dir).mkdir(parents=True, exist_ok=True)
+        with open(os.path.join(output_dir, "error_log.txt"), "w") as f:
+            f.write(str(e))
         print(f"\n✗ Training failed: {type(e).__name__} - {e}")
         raise
 
 
 if __name__ == "__main__":
     main()
+
