@@ -7,31 +7,33 @@ import os
 import json
 import torch
 import pandas as pd
-import numpy as np                      
+import numpy as np
 from transformers import (
     AutoTokenizer,
     AutoModelForSequenceClassification,
     TrainingArguments,
     Trainer,
-    DataCollatorWithPadding
+    DataCollatorWithPadding,
 )
 from datasets import Dataset
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support
-from pathlib import Path                 # <-- helpful for safe path handling
-# ========================================
+from pathlib import Path
 
 
+# ======================================================
+# Utility: Load label map
+# ======================================================
 def load_label_map(path=None):
     """Load label mapping from JSON file"""
     if path is None:
-        data_path = os.getenv("DATA_PATH", "/app/data")
+        data_path = os.getenv("DATA_PATH", "/mnt/data")
         path = os.path.join(data_path, "label_map.json")
-    
+
     if os.path.exists(path):
         print(f"Loading label map from: {path}")
         with open(path) as f:
             m = json.load(f)
-        # keep both directions
+        # handle both string→int and int→string mappings
         id2label = (
             {int(v): k for k, v in m.items()}
             if all(isinstance(v, int) for v in m.values())
@@ -40,11 +42,14 @@ def load_label_map(path=None):
         label2id = {v: k for k, v in id2label.items()}
         print(f"Loaded {len(id2label)} labels: {id2label}")
         return id2label, label2id
-    
+
     print(f"Warning: label_map.json not found at {path}")
     return None, None
 
 
+# ======================================================
+# Trainer class
+# ======================================================
 class InvoiceClassificationTrainer:
     def __init__(self, model_name="microsoft/deberta-v3-base", num_labels=5):
         self.model_name = model_name
@@ -54,27 +59,28 @@ class InvoiceClassificationTrainer:
         self.id2label, self.label2id = load_label_map()
 
     def load_data(self):
-        """Load training and validation data from artifact mount point"""
-        data_path = os.getenv("DATA_PATH", "/app/data")
+        """Load train/validation CSVs from mounted S3 dataset"""
+        data_path = os.getenv("DATA_PATH", "/mnt/data")
         print(f"\n=== Loading Data ===")
         print(f"Data path: {data_path}")
-        
+
         if not os.path.exists(data_path):
             raise FileNotFoundError(f"Data directory not found: {data_path}")
-        print(f"Directory contents: {os.listdir(data_path)}")
+
+        print(f"Contents of {data_path}: {os.listdir(data_path)}")
 
         train_path = os.path.join(data_path, "train.csv")
         val_path = os.path.join(data_path, "validation.csv")
         if not os.path.exists(train_path):
-            raise FileNotFoundError(f"Training data not found at {train_path}")
+            raise FileNotFoundError(f"Training data missing: {train_path}")
         if not os.path.exists(val_path):
-            raise FileNotFoundError(f"Validation data not found at {val_path}")
+            raise FileNotFoundError(f"Validation data missing: {val_path}")
 
         train_df = pd.read_csv(train_path)
         val_df = pd.read_csv(val_path)
-        print(f"Loaded {len(train_df)} training and {len(val_df)} validation samples")
+        print(f"Loaded {len(train_df)} train / {len(val_df)} validation samples")
 
-        # Map string labels → ids if label_map exists
+        # map text labels → ints if label_map available
         if self.label2id and train_df["label"].dtype == object:
             train_df["label"] = train_df["label"].map(self.label2id)
             val_df["label"] = val_df["label"].map(self.label2id)
@@ -85,10 +91,7 @@ class InvoiceClassificationTrainer:
 
     def tokenize_function(self, examples):
         return self.tokenizer(
-            examples["text"],
-            padding="max_length",
-            truncation=True,
-            max_length=256,
+            examples["text"], padding="max_length", truncation=True, max_length=256
         )
 
     def compute_metrics(self, eval_pred):
@@ -101,16 +104,16 @@ class InvoiceClassificationTrainer:
         return {"accuracy": acc, "f1": f1, "precision": precision, "recall": recall}
 
     def train(self, output_dir="/mnt/models"):
-        """Train the model and save to output directory"""
-        print("\n=== Starting Training Process ===")
+        """Train and save model for AI Core artifact upload"""
+        print("\n=== Training Initialization ===")
         print(f"Model: {self.model_name}")
-        print(f"Number of labels: {self.num_labels}")
-        print(f"Output directory: {output_dir}")
+        print(f"Num labels: {self.num_labels}")
+        print(f"Output dir: {output_dir}")
 
-        # Don't create output_dir - Argo Workflows handles this
-        # os.makedirs(output_dir, exist_ok=True)  # REMOVED
+        # Ensure output directory exists so Argo can collect it
+        Path(output_dir).mkdir(parents=True, exist_ok=True)
 
-        print("\nLoading tokenizer and model...")
+        print("\nLoading tokenizer/model...")
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, use_fast=True)
         self.model = AutoModelForSequenceClassification.from_pretrained(
             self.model_name,
@@ -119,7 +122,7 @@ class InvoiceClassificationTrainer:
             label2id=self.label2id,
         )
 
-        print("\nLoading and tokenizing datasets...")
+        print("\nPreparing datasets...")
         train_ds, val_ds = self.load_data()
         train_ds = train_ds.map(self.tokenize_function, batched=True)
         val_ds = val_ds.map(self.tokenize_function, batched=True)
@@ -154,16 +157,17 @@ class InvoiceClassificationTrainer:
 
         print("\n=== Training Started ===")
         train_result = trainer.train()
-        print("\n=== Training Completed ===")
+        print("\n=== Training Finished ===")
 
-        print("\n=== Evaluating Model ===")
+        print("\nEvaluating model...")
         eval_results = trainer.evaluate()
         print(eval_results)
 
-        print("\n=== Saving Model to Artifact Directory ===")
+        print("\nSaving model to artifact path...")
         trainer.save_model(output_dir)
         self.tokenizer.save_pretrained(output_dir)
 
+        # Save training metadata
         metadata = {
             "model_name": self.model_name,
             "num_labels": self.num_labels,
@@ -171,15 +175,18 @@ class InvoiceClassificationTrainer:
             "eval_results": eval_results,
             "id2label": self.id2label,
         }
-        metadata_path = os.path.join(output_dir, "training_metadata.json")
-        with open(metadata_path, "w") as f:
+        meta_path = Path(output_dir) / "training_metadata.json"
+        with open(meta_path, "w") as f:
             json.dump(metadata, f, indent=2)
-        print(f"Saved metadata to {metadata_path}")
+        print(f"Saved metadata to {meta_path}")
 
-        print("\n=== Training Pipeline Completed Successfully ===")
+        print("\n=== Training Completed Successfully ===")
         return trainer
 
 
+# ======================================================
+# Main entry point
+# ======================================================
 def main():
     print("=" * 60)
     print("Invoice Classification Training - SAP AI Core")
@@ -190,18 +197,17 @@ def main():
     output_dir = os.getenv("OUTPUT_DIR", "/mnt/models")
 
     print(f"\nConfiguration:")
-    print(f"  Model: {model_name}")
-    print(f"  Number of labels: {num_labels}")
-    print(f"  Output directory: {output_dir}")
-    print(f"  Data path: {os.getenv('DATA_PATH', '/app/data')}")
+    print(f"  MODEL_NAME: {model_name}")
+    print(f"  NUM_LABELS: {num_labels}")
+    print(f"  OUTPUT_DIR: {output_dir}")
+    print(f"  DATA_PATH: {os.getenv('DATA_PATH', '/mnt/data')}")
 
     try:
         trainer = InvoiceClassificationTrainer(model_name=model_name, num_labels=num_labels)
         trainer.train(output_dir=output_dir)
-        print("\n✓ Training completed successfully!")
+        print("\n✓ Training finished successfully.")
     except Exception as e:
-        print(f"\n✗ Training failed with error:")
-        print(f"  {type(e).__name__}: {e}")
+        print(f"\n✗ Training failed: {type(e).__name__} - {e}")
         raise
 
 
