@@ -1,13 +1,13 @@
-# If you use a GPU base like pytorch/pytorch:2.3.1-cuda12.1-cudnn8-runtime,
-# remove the next line to avoid reinstalling torch.
-# Training dependencies for Hugging Face BYOM on SAP AI Core
-torch==2.3.1
-transformers>=4.42.0
-datasets>=2.20.0
-scikit-learn>=1.4.2
-pandas>=2.2.2
-numpy>=1.26.4
-tiktoken>=0.7.0
-protobuf>=4.25.3
-sentencepiece>=0.2.0
+# Core ML stack
+torch>=2.6.0
+transformers==4.44.2
+datasets==3.0.1
+scikit-learn==1.5.2
+pandas==2.2.3
+numpy==1.26.4
 
+# Utilities
+tqdm
+pyarrow
+fsspec
+safetensors

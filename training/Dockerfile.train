@@ -12,14 +12,24 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     OUTPUT_DIR=/mnt/models
 
 # ====== System setup ======
-RUN apt-get update && apt-get install -y --no-install-recommends tini && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends tini git && rm -rf /var/lib/apt/lists/*
 
 # ====== Set working directory ======
 WORKDIR /app
 
 # ====== Install Python dependencies ======
 COPY requirements-train.txt /app/requirements-train.txt
-RUN pip install --upgrade pip && pip install -r /app/requirements-train.txt
+
+# Upgrade pip and install safe versions (Torch 2.6+ fixes CVE-2025-32434)
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir \
+        torch>=2.6.0 \
+        transformers==4.44.2 \
+        datasets==3.0.1 \
+        scikit-learn==1.5.2 \
+        pandas==2.2.3 \
+        numpy==1.26.4 && \
+    pip install -r /app/requirements-train.txt
 
 # ====== Copy training code ======
 COPY train.py /app/train.py
