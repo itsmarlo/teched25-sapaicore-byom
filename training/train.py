@@ -3,12 +3,11 @@ Train Hugging Face Transformer for Invoice Classification
 Optimized for SAP AI Core deployment
 """
 
-# ===== Missing and required imports =====
 import os
 import json
 import torch
 import pandas as pd
-import numpy as np                      # <-- add missing import
+import numpy as np                      
 from transformers import (
     AutoTokenizer,
     AutoModelForSequenceClassification,
