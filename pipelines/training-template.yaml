@@ -40,7 +40,7 @@ spec:
         artifacts:
           - name: invoiceclassifiermodel
             globalName: invoiceclassifiermodel
-            path: /mnt/models/
+            path: /app/data/
             archive:
               none: {}
       container:
