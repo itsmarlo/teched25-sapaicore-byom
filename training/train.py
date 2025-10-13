@@ -4,6 +4,12 @@ Optimized for SAP AI Core deployment
 """
 
 import os
+from pathlib import Path
+
+output_dir = os.getenv("OUTPUT_DIR", "/mnt/models")
+Path(output_dir).mkdir(parents=True, exist_ok=True)
+os.chmod(output_dir, 0o777)  # give full access
+
 import json
 import torch
 import pandas as pd
