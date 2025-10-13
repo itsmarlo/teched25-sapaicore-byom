@@ -43,6 +43,7 @@ spec:
             path: /mnt/models/
             archive:
               none: {}
+
       container:
         image: docker.io/itsmarlo/invoice-train:latest
         imagePullPolicy: Always
@@ -64,6 +65,9 @@ spec:
             value: "/mnt/data"
           - name: OUTPUT_DIR
             value: "/mnt/models"
+        volumeMounts:
+          - name: model-output
+            mountPath: /mnt/models
         args:
           - |
             set -e
@@ -84,3 +88,7 @@ spec:
             
             echo "==== Training Complete - Output Contents ===="
             ls -la "${OUTPUT_DIR}"
+
+      volumes:
+        - name: model-output
+          emptyDir: {}
