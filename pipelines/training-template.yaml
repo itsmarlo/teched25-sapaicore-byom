@@ -80,7 +80,7 @@ spec:
             ls -la /mnt/models/ || echo "Directory not accessible"
             
             echo "==== Starting Training ===="
-            python /app/train.py
+            python /app/train_model.py
             
             echo "==== Training Complete - Output Contents ===="
             ls -la "${OUTPUT_DIR}"

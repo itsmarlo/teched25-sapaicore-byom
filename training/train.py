@@ -108,7 +108,8 @@ class InvoiceClassificationTrainer:
         print(f"Number of labels: {self.num_labels}")
         print(f"Output directory: {output_dir}")
 
-        os.makedirs(output_dir, exist_ok=True)
+        # Don't create output_dir - Argo Workflows handles this
+        # os.makedirs(output_dir, exist_ok=True)  # REMOVED
 
         print("\nLoading tokenizer and model...")
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, use_fast=True)
