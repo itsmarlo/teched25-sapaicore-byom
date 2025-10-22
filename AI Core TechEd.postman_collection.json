@@ -1,0 +1,1890 @@
+{
+	"info": {
+		"_postman_id": "824bd1fc-f8ef-4cc1-8ded-2308de437184",
+		"name": "AI Core TechEd",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "48234679",
+		"_collection_link": "https://itsmarlo-420e804e-5806132.postman.co/workspace/Marla-%F0%9F%8C%B1's-Workspace~a61f5189-6b33-4f4f-89f9-e1d4214d342c/collection/48234679-824bd1fc-f8ef-4cc1-8ded-2308de437184?action=share&source=collection_link&creator=48234679"
+	},
+	"item": [
+		{
+			"name": "Set up",
+			"item": [
+				{
+					"name": "Create resource groups",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"resourceGroupId\": \"ai-teched2025-group\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AI_API_URL}}/v2/admin/resourceGroups",
+							"host": [
+								"{{AI_API_URL}}"
+							],
+							"path": [
+								"v2",
+								"admin",
+								"resourceGroups"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Object Store Secrets",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "AI-Resource-Group",
+								"value": "ai-tutorial-group",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"default\",\r\n    \"data\": {\r\n        \"AWS_ACCESS_KEY_ID\": \"AKIATGGXF5PUNUZBAHGY\",\r\n        \"AWS_SECRET_ACCESS_KEY\": \"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\"\r\n    },\r\n    \"type\": \"S3\",\r\n    \"bucket\": \"aicore-s3-teched\",\r\n    \"endpoint\": \"s3.eu-north-1.amazonaws.com\",\r\n    \"region\": \"eu-north-1\",\r\n    \"pathPrefix\": \"\"\r\n}\r\n\r\n\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AI_API_URL}}/v2/admin/objectStoreSecrets",
+							"host": [
+								"{{AI_API_URL}}"
+							],
+							"path": [
+								"v2",
+								"admin",
+								"objectStoreSecrets"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Onboard GitHub repo",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"name\": \"teched25\",\r\n  \"url\": \"https://github.com/itsmarlo/teched25\",\r\n  \"credentials\": {\r\n    \"credentials\": {\r\n    \"type\": \"basic\",\r\n    \"username\": \"itsmarlo\",\r\n    \"password\": \"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\"\r\n  }\r\n    \r\n  \r\n}\r\n\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AI_API_URL}}/v2/admin/repositories",
+							"host": [
+								"{{AI_API_URL}}"
+							],
+							"path": [
+								"v2",
+								"admin",
+								"repositories"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Fetch Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const data = pm.response.json();",
+									"pm.environment.set(\"access_token\", data.access_token);",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "2a958892-8bb0-4ed7-9655-ef4e13104deb$jZpTKmZiHgK6MUO7cCAHfddsTw0A0kFM94mOc7x89UM=",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "sb-a8caa6f0-be04-4f67-8745-2ec3a79815bb!b587029|aicore!b540",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "grant_type",
+									"value": "client_credentials",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "https://marla-un6fe8al.authentication.eu10.hana.ondemand.com/oauth/token",
+							"protocol": "https",
+							"host": [
+								"marla-un6fe8al",
+								"authentication",
+								"eu10",
+								"hana",
+								"ondemand",
+								"com"
+							],
+							"path": [
+								"oauth",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "dataset",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "aws bucket contains",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Training",
+			"item": [
+				{
+					"name": "Create application",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"path\": \"pipelines\",\r\n  \"name\": \"teched25\",\r\n  \"repositoryUrl\": \"https://github.com/itsmarlo/teched25\",\r\n \"applicationName\": \"teched2025\",\r\n \"revision\": \"main\",\r\n \"credentials\": {\r\n     \"username\": \"itsmarlo\",\r\n     \"password\": \"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\"\r\n   }\r\n \r\n  \r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AI_API_URL}}/v2/admin/applications",
+							"host": [
+								"{{AI_API_URL}}"
+							],
+							"path": [
+								"v2",
+								"admin",
+								"applications"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "fetch tocken",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const data = pm.response.json();",
+									"pm.environment.set(\"access_token\", data.access_token);",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "sb-a8caa6f0-be04-4f67-8745-2ec3a79815bb!b587029|aicore!b540",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "2a958892-8bb0-4ed7-9655-ef4e13104deb$jZpTKmZiHgK6MUO7cCAHfddsTw0A0kFM94mOc7x89UM=",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "grant_type",
+									"value": "client_credentials",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{tokenURL}}/oauth/token",
+							"host": [
+								"{{tokenURL}}"
+							],
+							"path": [
+								"oauth",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List of scenarios",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "AI-Resource-Group",
+								"value": "ai-tutorial-group",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AI_API_URL}}/lm/scenarios",
+							"host": [
+								"{{AI_API_URL}}"
+							],
+							"path": [
+								"lm",
+								"scenarios"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List of executables",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "AI-Resource-Group",
+								"value": "ai-tutorial-group",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AI_API_URL}}/lm/scenarios/:scenarioId/executables",
+							"host": [
+								"{{AI_API_URL}}"
+							],
+							"path": [
+								"lm",
+								"scenarios",
+								":scenarioId",
+								"executables"
+							],
+							"variable": [
+								{
+									"key": "scenarioId",
+									"value": "iris-classifier-scenario"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Register dataset artifact",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "AI-Resource-Group",
+								"value": "ai-teched2025-group",
+								"description": "ai-teched2025-group"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"invoicesdataset-v3\",\n  \"kind\": \"dataset\",\n  \"scenarioId\": \"blocked-invoice-classifier\",\n  \"url\": \"ai://default/data/invoices/\",\n  \"description\": \"Invoices dataset (train/validation/test/label_map.json)\"\n}\n",
+							"options": {
+								"raw": {
+									"headerFamily": "json",
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AI_API_URL}}/v2/lm/artifacts",
+							"host": [
+								"{{AI_API_URL}}"
+							],
+							"path": [
+								"v2",
+								"lm",
+								"artifacts"
+							]
+						},
+						"description": "Register an artifact for use in a configuration, for example a model or a dataset."
+					},
+					"response": [
+						{
+							"name": "The artifact has been registered successfully",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "AI-Resource-Group",
+										"value": "<string>",
+										"description": "(Required) Specify a resource group id"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "<token>",
+										"description": "Added as a part of security scheme: oauth2"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"kind\": \"dataset\",\n  \"name\": \"W\",\n  \"scenarioId\": \"xl9WKZGt\",\n  \"url\": \"bmjfi2att://8(&J;A]y&E\",\n  \"labels\": [\n    {\n      \"key\": \"ext.ai.sap.com/xiI\",\n      \"value\": \"<string>\"\n    },\n    {\n      \"key\": \"ext.ai.sap.com/hsWy09UM0\",\n      \"value\": \"<string>\"\n    }\n  ],\n  \"description\": \"<string>\"\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/lm/artifacts",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"lm",
+										"artifacts"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Location",
+									"value": "<string>",
+									"description": {
+										"content": "URL of the registered artifact",
+										"type": "text/plain"
+									}
+								},
+								{
+									"key": "Content-Location",
+									"value": "<string>",
+									"description": {
+										"content": "URL of the registered artifact. This header is deprecated. Location header shall be used instead.",
+										"type": "text/plain"
+									}
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"id\": \"Qift4xfnopyCblY\",\n  \"message\": \"<string>\",\n  \"url\": \"2ue9h7e://1d\"\n}"
+						},
+						{
+							"name": "The specification of the resource was incorrect",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "AI-Resource-Group",
+										"value": "<string>",
+										"description": "(Required) Specify a resource group id"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "<token>",
+										"description": "Added as a part of security scheme: oauth2"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"kind\": \"dataset\",\n  \"name\": \"W\",\n  \"scenarioId\": \"xl9WKZGt\",\n  \"url\": \"bmjfi2att://8(&J;A]y&E\",\n  \"labels\": [\n    {\n      \"key\": \"ext.ai.sap.com/xiI\",\n      \"value\": \"<string>\"\n    },\n    {\n      \"key\": \"ext.ai.sap.com/hsWy09UM0\",\n      \"value\": \"<string>\"\n    }\n  ],\n  \"description\": \"<string>\"\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/lm/artifacts",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"lm",
+										"artifacts"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"error\": {\n    \"code\": \"<string>\",\n    \"message\": \"<string>\",\n    \"requestId\": \"<string>\",\n    \"target\": \"<string>\",\n    \"details\": {}\n  }\n}"
+						}
+					]
+				},
+				{
+					"name": "Download file",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "AI-Resource-Group",
+								"value": "ai-tutorial-group",
+								"description": "Specify a resource group id"
+							},
+							{
+								"key": "Accept",
+								"value": "application/octet-stream"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/lm/dataset/files/:path",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"lm",
+								"dataset",
+								"files",
+								":path"
+							],
+							"variable": [
+								{
+									"key": "path",
+									"value": "default/trainingdata/irisdataset.csv",
+									"description": "(Required) path relative to the object store root URL in the secret"
+								}
+							]
+						},
+						"description": "Endpoint for downloading file. The path must point to an individual file."
+					},
+					"response": [
+						{
+							"name": "OK",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "AI-Resource-Group",
+										"value": "<string>",
+										"description": "Specify a resource group id",
+										"disabled": true
+									},
+									{
+										"key": "Accept",
+										"value": "application/octet-stream"
+									},
+									{
+										"key": "Authorization",
+										"value": "<token>",
+										"description": "Added as a part of security scheme: oauth2"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/lm/dataset/files/:path",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"lm",
+										"dataset",
+										"files",
+										":path"
+									],
+									"variable": [
+										{
+											"key": "path"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "text",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/octet-stream"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "<string>",
+									"description": {
+										"content": "(Required) as per SEC-228 value should always be \"nosniff\"",
+										"type": "text/plain"
+									}
+								},
+								{
+									"key": "Content-Security-Policy",
+									"value": "<string>",
+									"description": {
+										"content": "(Required) as per SEC-228 value should always be \"default-src 'none'; sandbox\"",
+										"type": "text/plain"
+									}
+								},
+								{
+									"key": "Content-Disposition",
+									"value": "<string>",
+									"description": {
+										"content": "(Required) as per SEC-228 value should always be \"attachment\"",
+										"type": "text/plain"
+									}
+								}
+							],
+							"cookie": [],
+							"body": "<string>"
+						},
+						{
+							"name": "The specification of the resource was incorrect",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "AI-Resource-Group",
+										"value": "<string>",
+										"description": "Specify a resource group id",
+										"disabled": true
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "<token>",
+										"description": "Added as a part of security scheme: oauth2"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/lm/dataset/files/:path",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"lm",
+										"dataset",
+										"files",
+										":path"
+									],
+									"variable": [
+										{
+											"key": "path"
+										}
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"code\": \"<string>\",\n  \"details\": [\n    {\n      \"code\": \"<string>\",\n      \"message\": \"<string>\"\n    },\n    {\n      \"code\": \"<string>\",\n      \"message\": \"<string>\"\n    }\n  ],\n  \"message\": \"<string>\",\n  \"requestId\": \"<string>\",\n  \"target\": \"<string>\"\n}"
+						},
+						{
+							"name": "The specified resource was not found",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "AI-Resource-Group",
+										"value": "<string>",
+										"description": "Specify a resource group id",
+										"disabled": true
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "<token>",
+										"description": "Added as a part of security scheme: oauth2"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/lm/dataset/files/:path",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"lm",
+										"dataset",
+										"files",
+										":path"
+									],
+									"variable": [
+										{
+											"key": "path"
+										}
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"code\": \"<string>\",\n  \"details\": [\n    {\n      \"code\": \"<string>\",\n      \"message\": \"<string>\"\n    },\n    {\n      \"code\": \"<string>\",\n      \"message\": \"<string>\"\n    }\n  ],\n  \"message\": \"<string>\",\n  \"requestId\": \"<string>\",\n  \"target\": \"<string>\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Create configuration",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.environment.set(\"configurationId\", pm.response.json().id);"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "AI-Resource-Group",
+								"value": "ai-teched2025-group",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"name\": \"byom-train-config-v2\",\r\n  \"scenarioId\": \"blocked-invoice-classifier\",\r\n  \"versionId\": \"1.0.0\",\r\n  \"executableId\": \"invoice-training-pipeline\",\r\n  \"inputArtifactBindings\": [\r\n    {\r\n      \"name\": \"invoicesdataset\",\r\n      \"artifactId\": \"REPLACE_WITH_DATASET_UUID\"\r\n    }\r\n  ],\r\n  \"parameterBindings\": [\r\n    { \"name\": \"numLabels\",    \"value\": \"5\" },\r\n    { \"name\": \"baseModel\",    \"value\": \"microsoft/deberta-v3-base\" },\r\n    { \"name\": \"numEpochs\",    \"value\": \"3\" },\r\n    { \"name\": \"learningRate\", \"value\": \"2e-5\" },\r\n    { \"name\": \"batchSize\",    \"value\": \"16\" }\r\n  ]\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AI_API_URL}}/v2/lm/configurations",
+							"host": [
+								"{{AI_API_URL}}"
+							],
+							"path": [
+								"v2",
+								"lm",
+								"configurations"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Trigger execution",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "AI-Resource-Group",
+								"value": "ai-tutorial-group",
+								"description": "(Required) Specify a resource group id"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"configurationId\": \"dc62d1e0-209f-48e4-a35a-3b8f549891a4\"\n}",
+							"options": {
+								"raw": {
+									"headerFamily": "json",
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AI_API_URL}}/lm/executions",
+							"host": [
+								"{{AI_API_URL}}"
+							],
+							"path": [
+								"lm",
+								"executions"
+							]
+						},
+						"description": "Create a deployment using the configuration specified by configurationId."
+					},
+					"response": [
+						{
+							"name": "The deployment has been scheduled successfully",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "AI-Resource-Group",
+										"value": "<string>",
+										"description": "(Required) Specify a resource group id"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "<token>",
+										"description": "Added as a part of security scheme: oauth2"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"configurationId\": \"LKH2DXAxlk9stHuy\",\n  \"ttl\": {}\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/lm/deployments",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"lm",
+										"deployments"
+									]
+								}
+							},
+							"status": "Accepted",
+							"code": 202,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Location",
+									"value": "<string>",
+									"description": {
+										"content": "URL of the scheduled deployment",
+										"type": "text/plain"
+									}
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"id\": \"OkUyF4UJFup4nYRkEXpyE.uYgrlry7n3AEecYfzW1Uex\",\n  \"message\": \"<string>\",\n  \"deploymentUrl\": \"<string>\",\n  \"status\": \"COMPLETED\",\n  \"ttl\": \"0784,\"\n}"
+						},
+						{
+							"name": "The specification of the resource was incorrect",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "AI-Resource-Group",
+										"value": "<string>",
+										"description": "(Required) Specify a resource group id"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "<token>",
+										"description": "Added as a part of security scheme: oauth2"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"configurationId\": \"LKH2DXAxlk9stHuy\",\n  \"ttl\": {}\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/lm/deployments",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"lm",
+										"deployments"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"error\": {\n    \"code\": \"<string>\",\n    \"message\": \"<string>\",\n    \"requestId\": \"<string>\",\n    \"target\": \"<string>\",\n    \"details\": {}\n  }\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Serving",
+			"item": [
+				{
+					"name": "Create configuration",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.environment.set(\"configurationId\", pm.response.json().id);"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "AI-Resource-Group",
+								"value": "ai-tutorial-group",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"executableId\": \"invoice-classifier-serving\",\r\n  \"name\": \"Invoice Classifier Serving Configuration\",\r\n  \"scenarioId\": \"invoice-classification\",\r\n  \"inputArtifactBindings\": [\r\n    {\r\n      \"key\": \"invoiceclassifiermodel\",\r\n      \"artifactId\": \"<MODEL_ARTIFACT_ID>\"\r\n    }\r\n  ],\r\n  \"parameterBindings\": [\r\n    {\r\n      \"key\": \"serviceName\",\r\n      \"value\": \"invoice-classifier\"\r\n    },\r\n    {\r\n      \"key\": \"image\",\r\n      \"value\": \"docker.io/itsmarlo/invoice-serve:latest\"\r\n    },\r\n    {\r\n      \"key\": \"imagePullSecret\",\r\n      \"value\": \"docker-registry-secret\"\r\n    },\r\n    {\r\n      \"key\": \"port\",\r\n      \"value\": \"8080\"\r\n    },\r\n    {\r\n      \"key\": \"minReplicas\",\r\n      \"value\": \"1\"\r\n    },\r\n    {\r\n      \"key\": \"maxReplicas\",\r\n      \"value\": \"3\"\r\n    }\r\n  ]\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AI_API_URL}}/lm/configurations",
+							"host": [
+								"{{AI_API_URL}}"
+							],
+							"path": [
+								"lm",
+								"configurations"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create deployment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "AI-Resource-Group",
+								"value": "ai-tutorial-group",
+								"description": "(Required) Specify a resource group id"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"configurationId\": \"d80d4520-7194-4fa5-b7d7-904d29d1241a\"\n}",
+							"options": {
+								"raw": {
+									"headerFamily": "json",
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{AI_API_URL}}/lm/deployments",
+							"host": [
+								"{{AI_API_URL}}"
+							],
+							"path": [
+								"lm",
+								"deployments"
+							]
+						},
+						"description": "Create a deployment using the configuration specified by configurationId."
+					},
+					"response": [
+						{
+							"name": "The deployment has been scheduled successfully",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "AI-Resource-Group",
+										"value": "<string>",
+										"description": "(Required) Specify a resource group id"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "<token>",
+										"description": "Added as a part of security scheme: oauth2"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"configurationId\": \"LKH2DXAxlk9stHuy\",\n  \"ttl\": {}\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/lm/deployments",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"lm",
+										"deployments"
+									]
+								}
+							},
+							"status": "Accepted",
+							"code": 202,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Location",
+									"value": "<string>",
+									"description": {
+										"content": "URL of the scheduled deployment",
+										"type": "text/plain"
+									}
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"id\": \"OkUyF4UJFup4nYRkEXpyE.uYgrlry7n3AEecYfzW1Uex\",\n  \"message\": \"<string>\",\n  \"deploymentUrl\": \"<string>\",\n  \"status\": \"COMPLETED\",\n  \"ttl\": \"0784,\"\n}"
+						},
+						{
+							"name": "The specification of the resource was incorrect",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "AI-Resource-Group",
+										"value": "<string>",
+										"description": "(Required) Specify a resource group id"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "<token>",
+										"description": "Added as a part of security scheme: oauth2"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"configurationId\": \"LKH2DXAxlk9stHuy\",\n  \"ttl\": {}\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/lm/deployments",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"lm",
+										"deployments"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"error\": {\n    \"code\": \"<string>\",\n    \"message\": \"<string>\",\n    \"requestId\": \"<string>\",\n    \"target\": \"<string>\",\n    \"details\": {}\n  }\n}"
+						}
+					]
+				},
+				{
+					"name": "Get greeting",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "AI-Resource-Group",
+								"value": "ai-tutorial-group",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://api.ai.prod.us-east-1.aws.ml.hana.ondemand.com/v2/inference/deployments/dd93ef86bc4085c3/v2/greet",
+							"protocol": "https",
+							"host": [
+								"api",
+								"ai",
+								"prod",
+								"us-east-1",
+								"aws",
+								"ml",
+								"hana",
+								"ondemand",
+								"com"
+							],
+							"path": [
+								"v2",
+								"inference",
+								"deployments",
+								"dd93ef86bc4085c3",
+								"v2",
+								"greet"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get prediction",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "AI-Resource-Group",
+								"value": "ai-teched2025-group",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"predictions\": [\n    {\"label\": \"Price Variance\", \"score\": 0.93},\n    {\"label\": \"Quantity Mismatch\", \"score\": 0.89},\n    {\"label\": \"Missing PO Reference\", \"score\": 0.95},\n    {\"label\": \"Three-Way Match Failure\", \"score\": 0.92},\n    {\"label\": \"Supplier Issues\", \"score\": 0.88}\n  ]\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://api.ai.prod.us-east-1.aws.ml.hana.ondemand.com/v2/inference/deployments/d7a4f0465f0cc065/v2/predict",
+							"protocol": "https",
+							"host": [
+								"api",
+								"ai",
+								"prod",
+								"us-east-1",
+								"aws",
+								"ml",
+								"hana",
+								"ondemand",
+								"com"
+							],
+							"path": [
+								"v2",
+								"inference",
+								"deployments",
+								"d7a4f0465f0cc065",
+								"v2",
+								"predict"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get logs of specific deployment",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/lm/deployments/:deploymentId/logs",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"lm",
+								"deployments",
+								":deploymentId",
+								"logs"
+							],
+							"query": [
+								{
+									"key": "$top",
+									"value": "1000",
+									"description": "The max number of entries to return. Defaults to 1000. Limited to 5000 max.",
+									"disabled": true
+								},
+								{
+									"key": "start",
+									"value": "<dateTime>",
+									"description": "The start time for the query as a RFC 3339 datetime format. Defaults to one hour ago. + in timezone need to be encoded to %2B.",
+									"disabled": true
+								},
+								{
+									"key": "end",
+									"value": "<dateTime>",
+									"description": "The end time for the query as a RFC 3339 datetime format. Defaults to now. + in timezone need to be encoded to %2B.",
+									"disabled": true
+								},
+								{
+									"key": "$order",
+									"value": "desc",
+									"description": "Determines the sort order. Supported values are asc or desc. Defaults to asc. Sort order:\n  * `asc` - Ascending, earliest in the order will appear at the top of the list\n  * `desc` - Descending, last in the order will appear at the top of the list\n",
+									"disabled": true
+								}
+							],
+							"variable": [
+								{
+									"key": "deploymentId",
+									"value": "dd93ef86bc4085c3",
+									"description": "(Required) Deployment identifier"
+								}
+							]
+						},
+						"description": "Retrieve logs of a deployment for getting insight into the deployment results or failures."
+					},
+					"response": [
+						{
+							"name": "The query was processed successfully and logs of the requested deployment will be returned.",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "<token>",
+										"description": "Added as a part of security scheme: oauth2"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/lm/deployments/:deploymentId/logs",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"lm",
+										"deployments",
+										":deploymentId",
+										"logs"
+									],
+									"query": [
+										{
+											"key": "$top",
+											"value": "1000",
+											"description": "The max number of entries to return. Defaults to 1000. Limited to 5000 max.",
+											"disabled": true
+										},
+										{
+											"key": "start",
+											"value": "<dateTime>",
+											"description": "The start time for the query as a RFC 3339 datetime format. Defaults to one hour ago. + in timezone need to be encoded to %2B.",
+											"disabled": true
+										},
+										{
+											"key": "end",
+											"value": "<dateTime>",
+											"description": "The end time for the query as a RFC 3339 datetime format. Defaults to now. + in timezone need to be encoded to %2B.",
+											"disabled": true
+										},
+										{
+											"key": "$order",
+											"value": "desc",
+											"description": "Determines the sort order. Supported values are asc or desc. Defaults to asc. Sort order:\n  * `asc` - Ascending, earliest in the order will appear at the top of the list\n  * `desc` - Descending, last in the order will appear at the top of the list\n",
+											"disabled": true
+										}
+									],
+									"variable": [
+										{
+											"key": "deploymentId"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"data\": {\n    \"result\": [\n      {\n        \"timestamp\": \"<dateTime>\",\n        \"msg\": \"<string>\"\n      },\n      {\n        \"timestamp\": \"<dateTime>\",\n        \"msg\": \"<string>\"\n      }\n    ]\n  }\n}"
+						},
+						{
+							"name": "The request was malformed and could thus not be processed.",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "<token>",
+										"description": "Added as a part of security scheme: oauth2"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/lm/deployments/:deploymentId/logs",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"lm",
+										"deployments",
+										":deploymentId",
+										"logs"
+									],
+									"query": [
+										{
+											"key": "$top",
+											"value": "1000",
+											"description": "The max number of entries to return. Defaults to 1000. Limited to 5000 max.",
+											"disabled": true
+										},
+										{
+											"key": "start",
+											"value": "<dateTime>",
+											"description": "The start time for the query as a RFC 3339 datetime format. Defaults to one hour ago. + in timezone need to be encoded to %2B.",
+											"disabled": true
+										},
+										{
+											"key": "end",
+											"value": "<dateTime>",
+											"description": "The end time for the query as a RFC 3339 datetime format. Defaults to now. + in timezone need to be encoded to %2B.",
+											"disabled": true
+										},
+										{
+											"key": "$order",
+											"value": "desc",
+											"description": "Determines the sort order. Supported values are asc or desc. Defaults to asc. Sort order:\n  * `asc` - Ascending, earliest in the order will appear at the top of the list\n  * `desc` - Descending, last in the order will appear at the top of the list\n",
+											"disabled": true
+										}
+									],
+									"variable": [
+										{
+											"key": "deploymentId"
+										}
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"error\": {\n    \"code\": \"<string>\",\n    \"message\": \"<string>\",\n    \"requestId\": \"<string>\",\n    \"target\": \"<string>\",\n    \"details\": {}\n  }\n}"
+						},
+						{
+							"name": "Lacks valid authentication credentials for the target resource.",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "<token>",
+										"description": "Added as a part of security scheme: oauth2"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/lm/deployments/:deploymentId/logs",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"lm",
+										"deployments",
+										":deploymentId",
+										"logs"
+									],
+									"query": [
+										{
+											"key": "$top",
+											"value": "1000",
+											"description": "The max number of entries to return. Defaults to 1000. Limited to 5000 max.",
+											"disabled": true
+										},
+										{
+											"key": "start",
+											"value": "<dateTime>",
+											"description": "The start time for the query as a RFC 3339 datetime format. Defaults to one hour ago. + in timezone need to be encoded to %2B.",
+											"disabled": true
+										},
+										{
+											"key": "end",
+											"value": "<dateTime>",
+											"description": "The end time for the query as a RFC 3339 datetime format. Defaults to now. + in timezone need to be encoded to %2B.",
+											"disabled": true
+										},
+										{
+											"key": "$order",
+											"value": "desc",
+											"description": "Determines the sort order. Supported values are asc or desc. Defaults to asc. Sort order:\n  * `asc` - Ascending, earliest in the order will appear at the top of the list\n  * `desc` - Descending, last in the order will appear at the top of the list\n",
+											"disabled": true
+										}
+									],
+									"variable": [
+										{
+											"key": "deploymentId"
+										}
+									]
+								}
+							},
+							"status": "Unauthorized",
+							"code": 401,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"error\": {\n    \"code\": \"<string>\",\n    \"message\": \"<string>\",\n    \"requestId\": \"<string>\",\n    \"target\": \"<string>\",\n    \"details\": {}\n  }\n}"
+						},
+						{
+							"name": "The specified resource was not found",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "<token>",
+										"description": "Added as a part of security scheme: oauth2"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/lm/deployments/:deploymentId/logs",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"lm",
+										"deployments",
+										":deploymentId",
+										"logs"
+									],
+									"query": [
+										{
+											"key": "$top",
+											"value": "1000",
+											"description": "The max number of entries to return. Defaults to 1000. Limited to 5000 max.",
+											"disabled": true
+										},
+										{
+											"key": "start",
+											"value": "<dateTime>",
+											"description": "The start time for the query as a RFC 3339 datetime format. Defaults to one hour ago. + in timezone need to be encoded to %2B.",
+											"disabled": true
+										},
+										{
+											"key": "end",
+											"value": "<dateTime>",
+											"description": "The end time for the query as a RFC 3339 datetime format. Defaults to now. + in timezone need to be encoded to %2B.",
+											"disabled": true
+										},
+										{
+											"key": "$order",
+											"value": "desc",
+											"description": "Determines the sort order. Supported values are asc or desc. Defaults to asc. Sort order:\n  * `asc` - Ascending, earliest in the order will appear at the top of the list\n  * `desc` - Descending, last in the order will appear at the top of the list\n",
+											"disabled": true
+										}
+									],
+									"variable": [
+										{
+											"key": "deploymentId"
+										}
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"error\": {\n    \"code\": \"<string>\",\n    \"message\": \"<string>\",\n    \"requestId\": \"<string>\",\n    \"target\": \"<string>\",\n    \"details\": {}\n  }\n}"
+						},
+						{
+							"name": "HTTP status codes 401, 403 or 500. Response body contains further details.",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "<token>",
+										"description": "Added as a part of security scheme: oauth2"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/lm/deployments/:deploymentId/logs",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"lm",
+										"deployments",
+										":deploymentId",
+										"logs"
+									],
+									"query": [
+										{
+											"key": "$top",
+											"value": "1000",
+											"description": "The max number of entries to return. Defaults to 1000. Limited to 5000 max.",
+											"disabled": true
+										},
+										{
+											"key": "start",
+											"value": "<dateTime>",
+											"description": "The start time for the query as a RFC 3339 datetime format. Defaults to one hour ago. + in timezone need to be encoded to %2B.",
+											"disabled": true
+										},
+										{
+											"key": "end",
+											"value": "<dateTime>",
+											"description": "The end time for the query as a RFC 3339 datetime format. Defaults to now. + in timezone need to be encoded to %2B.",
+											"disabled": true
+										},
+										{
+											"key": "$order",
+											"value": "desc",
+											"description": "Determines the sort order. Supported values are asc or desc. Defaults to asc. Sort order:\n  * `asc` - Ascending, earliest in the order will appear at the top of the list\n  * `desc` - Descending, last in the order will appear at the top of the list\n",
+											"disabled": true
+										}
+									],
+									"variable": [
+										{
+											"key": "deploymentId"
+										}
+									]
+								}
+							},
+							"status": "Internal Server Error",
+							"code": 500,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"error\": {\n    \"code\": \"<string>\",\n    \"message\": \"<string>\",\n    \"requestId\": \"<string>\",\n    \"target\": \"<string>\",\n    \"details\": {}\n  }\n}"
+						}
+					]
+				},
+				{
+					"name": "Get local prediction",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "AI-Resource-Group",
+								"value": "ai-tutorial-group",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"SepalLengthCm\": \"6.7\",\r\n    \"SepalWidthCm\": \"2.5\",\r\n    \"PetalLengthCm\": \"5.8\",\r\n    \"PetalWidthCm\": \"1.9\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:5000/v2/predict",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "5000",
+							"path": [
+								"v2",
+								"predict"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "oauth2",
+		"oauth2": [
+			{
+				"key": "clientSecret",
+				"value": "{{clientSecret}}",
+				"type": "string"
+			},
+			{
+				"key": "clientId",
+				"value": "{{clientId}}",
+				"type": "string"
+			},
+			{
+				"key": "accessTokenUrl",
+				"value": "{{tokenURL}}/oauth/token",
+				"type": "string"
+			},
+			{
+				"key": "tokenName",
+				"value": "AI Core Token",
+				"type": "string"
+			},
+			{
+				"key": "refreshRequestParams",
+				"value": [],
+				"type": "any"
+			},
+			{
+				"key": "tokenRequestParams",
+				"value": [],
+				"type": "any"
+			},
+			{
+				"key": "authRequestParams",
+				"value": [],
+				"type": "any"
+			},
+			{
+				"key": "challengeAlgorithm",
+				"value": "S256",
+				"type": "string"
+			},
+			{
+				"key": "grant_type",
+				"value": "client_credentials",
+				"type": "string"
+			},
+			{
+				"key": "addTokenTo",
+				"value": "header",
+				"type": "string"
+			},
+			{
+				"key": "client_authentication",
+				"value": "header",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}
