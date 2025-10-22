@@ -1,5 +1,4 @@
 # teched25-sapaicore-byom
-[![Ask DeepWiki](https://devin.ai/assets/askdeepwiki.png)](https://deepwiki.com/itsmarlo/teched25-sapaicore-byom)
 
 This repository contains the source code for the SAP TechEd 2025 demonstration on implementing a "Bring-Your-Own-Model" (BYOM) workflow on SAP AI Core. It provides a complete, end-to-end example of training a text classification model to identify reasons for blocked invoices and deploying it as a scalable inference service.
 
