@@ -1,4 +1,4 @@
-# 🚀 TechEd25  
+# 🚀 teched25-sapaicore-byom  
 End-to-end AI demo showcased at SAP TechEd 2025
 
 ## 📍 Overview  
